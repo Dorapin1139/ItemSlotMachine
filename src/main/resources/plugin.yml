@@ -23,3 +23,8 @@ commands:
     description: Commands related to statistics
     usage: /<command> help
     aliases: [slotstatistic, stat, stats]
+
+permissions:
+  itemslotmachine.slot.use:
+    description: Allows to use slot machines
+    default: true
