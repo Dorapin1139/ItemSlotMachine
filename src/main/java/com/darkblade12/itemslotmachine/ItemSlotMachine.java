@@ -22,7 +22,7 @@ public final class ItemSlotMachine extends PluginBase {
     private final VaultHook vaultHook;
 
     public ItemSlotMachine() {
-        super(49751, 7232, Locale.US, Locale.GERMANY);
+        super(Locale.US, Locale.GERMANY);
         settings = new Settings(this);
         vaultHook = new VaultHook(this);
 

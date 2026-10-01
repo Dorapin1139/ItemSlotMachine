@@ -1,13 +1,11 @@
 plugins {
     id("java-library")
-    id("com.gradleup.shadow") version "9.2.2"
 }
 
 repositories {
     mavenCentral()
     maven("https://repo.papermc.io/repository/maven-public/")
     maven("https://jitpack.io")
-    maven("https://repo.codemc.org/repository/maven-public/")
 }
 
 dependencies {
@@ -15,7 +13,6 @@ dependencies {
     compileOnly("com.github.MilkBowl:VaultAPI:1.7") {
         isTransitive = false
     }
-    implementation("org.bstats:bstats-bukkit:1.7")
 }
 
 java {
@@ -32,19 +29,5 @@ tasks {
         filesMatching("plugin.yml") {
             expand(props)
         }
-    }
-
-    shadowJar {
-        archiveClassifier = ""
-        // bStats は他のプラグインと衝突しないよう、自分のパッケージに移す
-        relocate("org.bstats.bukkit", "com.darkblade12.itemslotmachine.metrics")
-    }
-
-    jar {
-        enabled = false
-    }
-
-    build {
-        dependsOn(shadowJar)
     }
 }
