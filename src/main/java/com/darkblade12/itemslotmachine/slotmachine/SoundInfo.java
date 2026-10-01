@@ -5,6 +5,9 @@ import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.util.Locale;
 import java.util.regex.Pattern;
 
 public final class SoundInfo {
@@ -29,7 +32,7 @@ public final class SoundInfo {
         String[] data = text.split("-");
         Sound sound;
         try {
-            sound = Sound.valueOf(data[0].toUpperCase());
+            sound = getSound(data[0]);
         } catch (Exception e) {
             throw new IllegalArgumentException("Invalid sound name.");
         }
@@ -50,6 +53,16 @@ public final class SoundInfo {
 
         boolean broadcast = data.length <= 3 || Boolean.parseBoolean(data[3]);
         return new SoundInfo(sound, volume, pitch, broadcast);
+    }
+
+    // 設定ファイルの効果音名(BLOCK_NOTE_BLOCK_PLING など)は Sound の定数名なので、同じ名前の定数を取り出す
+    // (Sound.valueOf は削除予定。レジストリのキー block.note_block.pling とは形が違うため、キーでは引けない)
+    private static Sound getSound(String name) throws ReflectiveOperationException {
+        Field field = Sound.class.getField(name.toUpperCase(Locale.ROOT));
+        if (!Modifier.isStatic(field.getModifiers()) || field.getType() != Sound.class) {
+            throw new NoSuchFieldException(name);
+        }
+        return (Sound) field.get(null);
     }
 
     public void play(Location location) {
