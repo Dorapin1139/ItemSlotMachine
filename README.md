@@ -1,3 +1,6 @@
+THIS IS FORK.
+Original source code is [here](https://github.com/DarkBlade12/ItemSlotMachine/tree/master) by [DarkBlade12](https://github.com/DarkBlade12/).
+
 ItemSlotMachine
 ===============
 
