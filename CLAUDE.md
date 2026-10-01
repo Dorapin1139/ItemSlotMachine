@@ -37,7 +37,7 @@
 - その他の依存: VaultAPI 1.7(compileOnly、jitpack)のみ。jar に同梱するライブラリはない
 - バージョンは `gradle.properties` の `version`。`plugin.yml` の `${version}` に `processResources` で埋め込む。`api-version: '1.21.11'`
 - commons-lang などの外部ユーティリティは使わず、Java 標準で書く(Paper 1.21.11 に commons-lang 2 はない)。`capitalize` と `unescapeJava` は `util/MessageUtils` にある
-- 残っている警告: Paper で削除予定の API(`Sound.valueOf`、`PotionData`、`PatternType.valueOf`)。今は動くが、いずれ置き換えが必要
+- 削除予定(`forRemoval`)の API は使わない。レジストリの要素は `RegistryAccess.registryAccess().getRegistry(RegistryKey.…)` で引く(`Registry.BANNER_PATTERN` や `PatternType.getKey()` なども非推奨)。`-Xlint:deprecation` を付けると、ほかに非推奨(削除予定ではない)の警告が多数出るが、これはフォーク元からの既存のもの
 - softdepend: Vault, Multiverse-Core, Multiworld, PlotMe, MyWorlds, Essentials
 - パッケージ名は**すべて小文字**のままにする。大文字が混ざると plugin.yml の main と一致せず起動しない
 - 動作確認はサーバーを再起動して行う。PlugManX での読み込みは権限やコマンドの登録が不完全になることがある
@@ -61,6 +61,7 @@
 ### データの保存
 - プラグインフォルダ以外には何も書き込まない
 - スロットマシン・デザイン・統計・コインショップの保存形式を変えるときは、既存データの読み込み(移行)を必ず考える。サーバー上に既存のデータがある前提
+- アイテム(ポットの中身など)は `util/ItemStackAdapter` で JSON にする。ポーションの種類・追加効果・旗の模様は名前空間付きのキー(`minecraft:swiftness` など)で書き、フォーク元の古い形式(`basePotionData`、列挙名)も読めるようにしてある
 
 ### 他プラグインとの関係
 - 経済は Vault 経由。Vault がない環境でも起動できる状態を保つ

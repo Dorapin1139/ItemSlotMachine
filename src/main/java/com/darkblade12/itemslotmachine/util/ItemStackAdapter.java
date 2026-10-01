@@ -9,13 +9,17 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
+import io.papermc.paper.registry.RegistryAccess;
+import io.papermc.paper.registry.RegistryKey;
 import org.bukkit.Bukkit;
 import org.bukkit.Color;
 import org.bukkit.DyeColor;
 import org.bukkit.FireworkEffect;
+import org.bukkit.Keyed;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.Registry;
 import org.bukkit.block.banner.Pattern;
 import org.bukkit.block.banner.PatternType;
 import org.bukkit.enchantments.Enchantment;
@@ -34,7 +38,6 @@ import org.bukkit.inventory.meta.PotionMeta;
 import org.bukkit.inventory.meta.Repairable;
 import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.inventory.meta.SuspiciousStewMeta;
-import org.bukkit.potion.PotionData;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.potion.PotionType;
@@ -43,6 +46,7 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
@@ -51,6 +55,27 @@ import java.util.UUID;
 
 public final class ItemStackAdapter implements JsonSerializer<ItemStack>, JsonDeserializer<ItemStack> {
     private static final Gson GSON = new Gson();
+    // 1.20.5 で名前が変わったポーションの種類(フォーク元の 1.16 のころに保存したデータを読むため)
+    private static final Map<String, String> LEGACY_POTION_TYPES = new HashMap<>();
+    // 1.20.5 で名前が変わった旗の模様(同上。ほかの模様は小文字にするとキーと一致する)
+    private static final Map<String, String> LEGACY_PATTERN_TYPES = new HashMap<>();
+
+    static {
+        LEGACY_POTION_TYPES.put("SPEED", "swiftness");
+        LEGACY_POTION_TYPES.put("JUMP", "leaping");
+        LEGACY_POTION_TYPES.put("INSTANT_HEAL", "healing");
+        LEGACY_POTION_TYPES.put("INSTANT_DAMAGE", "harming");
+        LEGACY_POTION_TYPES.put("REGEN", "regeneration");
+
+        LEGACY_PATTERN_TYPES.put("STRIPE_SMALL", "small_stripes");
+        LEGACY_PATTERN_TYPES.put("DIAGONAL_RIGHT", "diagonal_up_right");
+        LEGACY_PATTERN_TYPES.put("DIAGONAL_LEFT_MIRROR", "diagonal_up_left");
+        LEGACY_PATTERN_TYPES.put("DIAGONAL_RIGHT_MIRROR", "diagonal_right");
+        LEGACY_PATTERN_TYPES.put("CIRCLE_MIDDLE", "circle");
+        LEGACY_PATTERN_TYPES.put("RHOMBUS_MIDDLE", "rhombus");
+        LEGACY_PATTERN_TYPES.put("HALF_VERTICAL_MIRROR", "half_vertical_right");
+        LEGACY_PATTERN_TYPES.put("HALF_HORIZONTAL_MIRROR", "half_horizontal_bottom");
+    }
 
     @Override
     public JsonElement serialize(ItemStack src, Type typeOfSrc, JsonSerializationContext context) {
@@ -185,7 +210,22 @@ public final class ItemStackAdapter implements JsonSerializer<ItemStack>, JsonDe
     }
 
     private static void serializeMeta(JsonObject root, BannerMeta meta) {
-        root.add("patterns", GSON.toJsonTree(meta.getPatterns()));
+        // 模様の種類はレジストリのオブジェクトなので、Gson に任せずキーで書き出す
+        // (PatternType.getKey は削除予定なので、レジストリからキーを引く。キーのない模様は保存できないので飛ばす)
+        Registry<PatternType> registry = RegistryAccess.registryAccess().getRegistry(RegistryKey.BANNER_PATTERN);
+        JsonArray patternsArray = new JsonArray();
+        for (Pattern pattern : meta.getPatterns()) {
+            NamespacedKey key = registry.getKey(pattern.getPattern());
+            if (key == null) {
+                continue;
+            }
+
+            JsonObject patternObj = new JsonObject();
+            patternObj.addProperty("color", pattern.getColor().name());
+            patternObj.addProperty("pattern", key.toString());
+            patternsArray.add(patternObj);
+        }
+        root.add("patterns", patternsArray);
     }
 
     private static void serializeMeta(JsonObject root, BookMeta meta) {
@@ -234,13 +274,16 @@ public final class ItemStackAdapter implements JsonSerializer<ItemStack>, JsonDe
     }
 
     private static void serializeMeta(JsonObject root, PotionMeta meta) {
-        root.add("basePotionData", GSON.toJsonTree(meta.getBasePotionData()));
+        if (meta.hasBasePotionType()) {
+            root.addProperty("basePotionType", Objects.requireNonNull(meta.getBasePotionType()).getKey().toString());
+        }
+
         if (meta.hasColor()) {
             root.add("color", GSON.toJsonTree(meta.getColor()));
         }
 
         if (meta.hasCustomEffects()) {
-            root.add("customEffects", GSON.toJsonTree(meta.getCustomEffects()));
+            root.add("customEffects", serializePotionEffects(meta.getCustomEffects()));
         }
     }
 
@@ -252,8 +295,24 @@ public final class ItemStackAdapter implements JsonSerializer<ItemStack>, JsonDe
 
     private static void serializeMeta(JsonObject root, SuspiciousStewMeta meta) {
         if (meta.hasCustomEffects()) {
-            root.add("customEffects", GSON.toJsonTree(meta.getCustomEffects()));
+            root.add("customEffects", serializePotionEffects(meta.getCustomEffects()));
         }
+    }
+
+    // 効果の種類はレジストリのオブジェクトなので、Gson に任せず deserializePotionEffect と同じ項目を書き出す
+    private static JsonArray serializePotionEffects(List<PotionEffect> effects) {
+        JsonArray effectsArray = new JsonArray();
+        for (PotionEffect effect : effects) {
+            JsonObject effectObj = new JsonObject();
+            effectObj.addProperty("type", effect.getType().getKey().toString());
+            effectObj.addProperty("duration", effect.getDuration());
+            effectObj.addProperty("amplifier", effect.getAmplifier());
+            effectObj.addProperty("ambient", effect.isAmbient());
+            effectObj.addProperty("particles", effect.hasParticles());
+            effectObj.addProperty("icon", effect.hasIcon());
+            effectsArray.add(effectObj);
+        }
+        return effectsArray;
     }
 
     private static JsonObject serializeEnchants(Map<Enchantment, Integer> enchants) {
@@ -350,16 +409,18 @@ public final class ItemStackAdapter implements JsonSerializer<ItemStack>, JsonDe
     }
 
     private static void deserializeMeta(JsonObject source, PotionMeta meta) throws JsonParseException {
-        JsonObject dataObj = source.getAsJsonObject("basePotionData");
-        PotionType type;
-        try {
-            type = PotionType.valueOf(dataObj.get("type").getAsString());
-        } catch (IllegalArgumentException ex) {
-            throw new JsonParseException("Invalid potion type");
+        if (source.has("basePotionType")) {
+            PotionType type = getRegistryEntry(RegistryKey.POTION, source.get("basePotionType").getAsString());
+            if (type == null) {
+                throw new JsonParseException("Invalid potion type");
+            }
+            meta.setBasePotionType(type);
+        } else if (source.has("basePotionData")) {
+            PotionType type = deserializeLegacyPotionType(source.getAsJsonObject("basePotionData"));
+            if (type != null) {
+                meta.setBasePotionType(type);
+            }
         }
-        boolean extended = dataObj.get("extended").getAsBoolean();
-        boolean upgraded = dataObj.get("upgraded").getAsBoolean();
-        meta.setBasePotionData(new PotionData(type, extended, upgraded));
 
         if (source.has("color")) {
             Color color = deserializeColor(source.getAsJsonObject("color"));
@@ -419,13 +480,51 @@ public final class ItemStackAdapter implements JsonSerializer<ItemStack>, JsonDe
             throw new JsonParseException("Invalid pattern color", ex);
         }
 
-        PatternType pattern;
-        try {
-            pattern = PatternType.valueOf(obj.get("pattern").getAsString());
-        } catch (IllegalArgumentException ex) {
-            throw new JsonParseException("Invalid pattern type", ex);
+        // 新しい形式はキー(minecraft:small_stripes)、古い形式は列挙名(STRIPE_SMALL)
+        String patternName = obj.get("pattern").getAsString();
+        PatternType pattern = getRegistryEntry(RegistryKey.BANNER_PATTERN, LEGACY_PATTERN_TYPES.getOrDefault(patternName, patternName));
+        if (pattern == null) {
+            throw new JsonParseException("Invalid pattern type");
         }
         return new Pattern(color, pattern);
+    }
+
+    // 古い形式(PotionData の種類・延長・強化)を、1.20.5 以降の種類(long_ / strong_ 付き)に直す
+    private static PotionType deserializeLegacyPotionType(JsonObject dataObj) throws JsonParseException {
+        String typeName = dataObj.get("type").getAsString();
+        if (typeName.equals("UNCRAFTABLE")) {
+            // 1.20.5 で廃止され、対応する種類がない
+            return null;
+        }
+
+        PotionType type = getRegistryEntry(RegistryKey.POTION, LEGACY_POTION_TYPES.getOrDefault(typeName, typeName));
+        if (type == null) {
+            throw new JsonParseException("Invalid potion type");
+        }
+
+        String prefix = null;
+        if (dataObj.get("extended").getAsBoolean()) {
+            prefix = "long_";
+        } else if (dataObj.get("upgraded").getAsBoolean()) {
+            prefix = "strong_";
+        }
+
+        if (prefix != null) {
+            PotionType variant = getRegistryEntry(RegistryKey.POTION, prefix + type.getKey().getKey());
+            if (variant != null) {
+                return variant;
+            }
+        }
+        return type;
+    }
+
+    // キー(minecraft: は省略可、大文字小文字は問わない)からレジストリの要素を取り出す。見つからなければ null
+    private static <T extends Keyed> T getRegistryEntry(RegistryKey<T> registryKey, String key) {
+        NamespacedKey namespacedKey = NamespacedKey.fromString(key.toLowerCase(Locale.ROOT));
+        if (namespacedKey == null) {
+            return null;
+        }
+        return RegistryAccess.registryAccess().getRegistry(registryKey).get(namespacedKey);
     }
 
     private static FireworkEffect deserializeFireworkEffect(JsonObject obj) throws JsonParseException {
@@ -487,7 +586,12 @@ public final class ItemStackAdapter implements JsonSerializer<ItemStack>, JsonDe
     private static PotionEffect deserializePotionEffect(JsonObject obj) throws JsonParseException {
         int amplifier = obj.get("amplifier").getAsInt();
         int duration = obj.get("duration").getAsInt();
-        PotionEffectType type = PotionEffectType.getByName(obj.get("type").getAsString());
+        // 新しい形式はキー(minecraft:speed)、古い形式は名前(SPEED)
+        String typeName = obj.get("type").getAsString();
+        PotionEffectType type = getRegistryEntry(RegistryKey.MOB_EFFECT, typeName);
+        if (type == null) {
+            type = PotionEffectType.getByName(typeName);
+        }
         if (type == null) {
             throw new JsonParseException("Invalid potion effect type");
         }
