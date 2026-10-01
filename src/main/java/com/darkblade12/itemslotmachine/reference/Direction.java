@@ -1,11 +1,11 @@
 package com.darkblade12.itemslotmachine.reference;
 
-import org.apache.commons.lang.ArrayUtils;
 import org.bukkit.Axis;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.data.Rail.Shape;
 import org.bukkit.entity.Player;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -69,7 +69,7 @@ public enum Direction {
             return face;
         }
 
-        int faceIndex = ArrayUtils.indexOf(FACE_ORDER, face);
+        int faceIndex = Arrays.asList(FACE_ORDER).indexOf(face);
         Direction current = initial;
         while (current != target) {
             faceIndex = (faceIndex + 4) % FACE_ORDER.length;

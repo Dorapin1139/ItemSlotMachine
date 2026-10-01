@@ -9,7 +9,6 @@ import com.darkblade12.itemslotmachine.slotmachine.SlotMachine;
 import com.darkblade12.itemslotmachine.slotmachine.SlotMachineManager;
 import com.darkblade12.itemslotmachine.util.ItemUtils;
 import com.darkblade12.itemslotmachine.util.MessageUtils;
-import org.apache.commons.lang.StringUtils;
 import org.bukkit.Material;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
@@ -73,7 +72,7 @@ public final class ItemCommand extends CommandBase<ItemSlotMachine> {
                 list = Collections.singletonList(item);
                 break;
             default:
-                String items = StringUtils.join(Arrays.copyOfRange(args, 2, args.length), " ");
+                String items = String.join(" ", Arrays.copyOfRange(args, 2, args.length));
 
                 try {
                     list = ItemUtils.fromListString(items, plugin.getManager(CoinManager.class).getCustomItems());

@@ -1,6 +1,5 @@
 package com.darkblade12.itemslotmachine.util;
 
-import org.apache.commons.lang.StringUtils;
 import org.bukkit.ChatColor;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -78,7 +77,7 @@ public final class MessageUtils {
 
     public static String formatName(Enum<?> enumObj, boolean capitalize) {
         String[] split = enumObj.name().toLowerCase().split("_");
-        return Arrays.stream(split).map(s -> capitalize ? StringUtils.capitalize(s) : s).collect(Collectors.joining(" "));
+        return Arrays.stream(split).map(s -> capitalize ? capitalize(s) : s).collect(Collectors.joining(" "));
     }
 
     public static String formatName(Enum<?> enumObj) {
@@ -94,5 +93,83 @@ public final class MessageUtils {
 
     public static String toString(Collection<ItemStack> items) {
         return items.stream().map(MessageUtils::toString).collect(Collectors.joining(ChatColor.GREEN + ", "));
+    }
+
+    // 先頭の 1 文字だけをタイトルケースにする(commons-lang の StringUtils.capitalize と同じ動き)
+    public static String capitalize(String text) {
+        if (text == null || text.isEmpty()) {
+            return text;
+        }
+
+        return Character.toTitleCase(text.charAt(0)) + text.substring(1);
+    }
+
+    // Java のエスケープ(\n、\t、\\、\" など)と \\uXXXX を元の文字に戻す
+    // (commons-lang 2 の StringEscapeUtils.unescapeJava と同じ動き。未知のエスケープはバックスラッシュだけを取り除く)
+    public static String unescapeJava(String text) {
+        if (text == null) {
+            return null;
+        }
+
+        StringBuilder result = new StringBuilder(text.length());
+        StringBuilder unicode = new StringBuilder(4);
+        boolean hadSlash = false;
+        boolean inUnicode = false;
+        for (int i = 0; i < text.length(); i++) {
+            char c = text.charAt(i);
+            if (inUnicode) {
+                unicode.append(c);
+                if (unicode.length() == 4) {
+                    try {
+                        result.append((char) Integer.parseInt(unicode.toString(), 16));
+                    } catch (NumberFormatException ex) {
+                        throw new IllegalArgumentException("Unable to parse unicode value: " + unicode, ex);
+                    }
+                    unicode.setLength(0);
+                    inUnicode = false;
+                }
+                continue;
+            }
+
+            if (hadSlash) {
+                hadSlash = false;
+                switch (c) {
+                    case 'r':
+                        result.append('\r');
+                        break;
+                    case 'f':
+                        result.append('\f');
+                        break;
+                    case 't':
+                        result.append('\t');
+                        break;
+                    case 'n':
+                        result.append('\n');
+                        break;
+                    case 'b':
+                        result.append('\b');
+                        break;
+                    case 'u':
+                        inUnicode = true;
+                        break;
+                    default:
+                        result.append(c);
+                        break;
+                }
+                continue;
+            }
+
+            if (c == '\\') {
+                hadSlash = true;
+            } else {
+                result.append(c);
+            }
+        }
+
+        if (hadSlash) {
+            result.append('\\');
+        }
+
+        return result.toString();
     }
 }

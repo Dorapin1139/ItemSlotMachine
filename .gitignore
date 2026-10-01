@@ -1,3 +1,7 @@
+# Gradle
+.gradle/
+build/
+
 # Eclipse
 bin/
 .settings/
@@ -7,6 +11,7 @@ bin/
 # IntelliJ
 .idea/
 *.iml
+out/
 
-# Maven
-target/
+# Paper の動作確認用フォルダ
+run/

@@ -1,6 +1,5 @@
 package com.darkblade12.itemslotmachine.util;
 
-import org.apache.commons.lang.NullArgumentException;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -16,7 +15,7 @@ public class SafeLocation implements Cloneable {
 
     private SafeLocation(String worldName, double x, double y, double z) {
         if (worldName == null) {
-            throw new NullArgumentException("worldName");
+            throw new IllegalArgumentException("worldName cannot be null.");
         }
 
         this.worldName = worldName;

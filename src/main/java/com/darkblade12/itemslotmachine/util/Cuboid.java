@@ -1,6 +1,5 @@
 package com.darkblade12.itemslotmachine.util;
 
-import org.apache.commons.lang.NullArgumentException;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -20,9 +19,9 @@ public final class Cuboid implements Iterable<Block> {
 
     public Cuboid(Location location1, Location location2) {
         if (location1 == null) {
-            throw new NullArgumentException("location1");
+            throw new IllegalArgumentException("location1 cannot be null.");
         } else if (location2 == null) {
-            throw new NullArgumentException("location2");
+            throw new IllegalArgumentException("location2 cannot be null.");
         }
 
         World world1 = location1.getWorld();
