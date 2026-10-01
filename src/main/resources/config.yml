@@ -23,7 +23,7 @@ design:
     enabled: true
   
     # The list of block types which are ignored by the space check
-    ignored-types: ['snow', 'grass', 'fern', 'tall_grass', 'large_fern']
+    ignored-types: ['snow', 'short_grass', 'fern', 'tall_grass', 'large_fern']
  
 # This section contains settings for all slot machines
 slot-machine:
@@ -47,4 +47,4 @@ coin:
   use-common-item: false
   
   # The price for a single coin
-  price: 100.0
+  price: 100.0
