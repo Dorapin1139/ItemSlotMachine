@@ -56,7 +56,7 @@ public class Settings extends SettingsBase<ItemSlotMachine> {
         if (slotMachineNamePattern == null || !slotMachineNamePattern.contains("{0}")) {
             plugin.logWarning("Missing id placeholder in setting %s! Default name pattern will be used.",
                               Setting.SLOT_MACHINE_NAME_PATTERN);
-            designNamePattern = DEFAULT_SLOT_MACHINE_NAME_PATTERN;
+            slotMachineNamePattern = DEFAULT_SLOT_MACHINE_NAME_PATTERN;
         }
         slotMachineUseLimit = config.getInt(Setting.SLOT_MACHINE_USE_LIMIT.getPath(), 1);
 
