@@ -2,10 +2,11 @@ package com.darkblade12.itemslotmachine.plugin;
 
 import com.darkblade12.itemslotmachine.plugin.command.CommandHandler;
 import com.darkblade12.itemslotmachine.plugin.command.CommandRegistrationException;
+import com.darkblade12.itemslotmachine.util.ColorCode;
+import com.darkblade12.itemslotmachine.util.MessageUtils;
 import com.google.common.collect.ClassToInstanceMap;
 import com.google.common.collect.MutableClassToInstanceMap;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
@@ -18,23 +19,17 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public abstract class PluginBase extends JavaPlugin {
     private static final Comparator<Manager<?>> MANAGER_COMPARATOR = Comparator.comparingInt(Manager::getLoadIndex);
-    protected final Logger logger;
-    protected final File config;
     protected final ClassToInstanceMap<Manager<?>> managers;
     protected final ClassToInstanceMap<CommandHandler<?>> commandHandlers;
     protected final Map<String, OfflinePlayer> playerCache;
     private int managerLoadIndex;
 
-    protected PluginBase(Locale... locales) {
-        logger = getLogger();
-        config = new File(getDataFolder(), "config.yml");
+    protected PluginBase() {
         playerCache = new ConcurrentHashMap<>();
         managers = MutableClassToInstanceMap.create();
-        managers.putInstance(MessageManager.class, new MessageManager(this, locales));
         commandHandlers = MutableClassToInstanceMap.create();
     }
 
@@ -129,27 +124,27 @@ public abstract class PluginBase extends JavaPlugin {
     }
 
     public void logInfo(String message) {
-        logger.info(message);
+        getLogger().info(message);
     }
 
     public void logInfo(String message, Object... args) {
-        logger.info(String.format(message, args));
+        getLogger().info(String.format(message, args));
     }
 
     public void logWarning(String message) {
-        logger.warning(message);
+        getLogger().warning(message);
     }
 
     public void logWarning(String message, Object... args) {
-        logger.warning(String.format(message, args));
+        getLogger().warning(String.format(message, args));
     }
 
     public void logException(Exception exception, String message) {
-        logger.log(Level.SEVERE, message, exception);
+        getLogger().log(Level.SEVERE, message, exception);
     }
 
     public void logException(Exception exception, String message, Object... args) {
-        logger.log(Level.SEVERE, String.format(message, args), exception);
+        getLogger().log(Level.SEVERE, String.format(message, args), exception);
     }
 
     public String formatMessage(Message message, Object... args) {
@@ -157,9 +152,9 @@ public abstract class PluginBase extends JavaPlugin {
     }
 
     public void sendMessage(CommandSender sender, Message message, Object... args) {
-        String text = getPrefix() + " " + ChatColor.RESET + getManager(MessageManager.class).formatMessage(message, args);
+        String text = getPrefix() + " " + ColorCode.RESET + getManager(MessageManager.class).formatMessage(message, args);
         if (sender instanceof ConsoleCommandSender) {
-            text = ChatColor.stripColor(text);
+            text = MessageUtils.stripColor(text);
         }
         sender.sendMessage(text);
     }
@@ -187,7 +182,7 @@ public abstract class PluginBase extends JavaPlugin {
     public abstract Locale getCurrentLocale();
 
     public String getVersion() {
-        return getDescription().getVersion();
+        return getPluginMeta().getVersion();
     }
 
     public <T extends Manager<?>> T getManager(Class<T> managerClass) {
@@ -216,7 +211,7 @@ public abstract class PluginBase extends JavaPlugin {
 
     @Override
     public FileConfiguration getConfig() {
-        if (!config.exists()) {
+        if (!new File(getDataFolder(), "config.yml").exists()) {
             saveDefaultConfig();
         }
 

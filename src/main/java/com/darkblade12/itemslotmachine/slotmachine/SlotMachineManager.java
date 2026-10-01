@@ -10,7 +10,6 @@ import com.darkblade12.itemslotmachine.plugin.Manager;
 import com.darkblade12.itemslotmachine.plugin.Message;
 import com.darkblade12.itemslotmachine.plugin.settings.InvalidValueException;
 import com.darkblade12.itemslotmachine.util.FileUtils;
-import com.darkblade12.itemslotmachine.util.ItemUtils;
 import com.google.gson.JsonParseException;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
@@ -315,7 +314,7 @@ public final class SlotMachineManager extends Manager<ItemSlotMachine> {
                     String plural = plugin.formatMessage(Message.WORD_COIN_PLURAL);
                     int required = slot.getSettings().coinAmount;
                     String requiredCoins = required == 1 ? singular : plural;
-                    int current = ItemUtils.getTotalAmount(player, coinManager.getCoin());
+                    int current = coinManager.getTotalCoins(player);
                     String currentCoins = current == 1 ? singular : plural;
                     plugin.sendMessage(player, Message.SLOT_MACHINE_NOT_ENOUGH_COINS, required, requiredCoins, current,
                                        currentCoins);

@@ -52,11 +52,11 @@ public final class ItemBuilder {
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
             if (name != null) {
-                meta.setDisplayName(name);
+                meta.displayName(MessageUtils.toItemComponent(name));
             }
 
             if (lore != null && lore.size() > 0) {
-                meta.setLore(lore);
+                meta.lore(MessageUtils.toItemComponents(lore));
             }
 
             meta.setUnbreakable(unbreakable);

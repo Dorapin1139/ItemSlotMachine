@@ -10,8 +10,8 @@ import com.darkblade12.itemslotmachine.statistic.PlayerStatistic;
 import com.darkblade12.itemslotmachine.statistic.SlotMachineStatistic;
 import com.darkblade12.itemslotmachine.statistic.Statistic;
 import com.darkblade12.itemslotmachine.statistic.StatisticManager;
+import com.darkblade12.itemslotmachine.util.ColorCode;
 import com.darkblade12.itemslotmachine.util.MessageUtils;
-import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 
 import java.util.ArrayList;
@@ -100,16 +100,16 @@ public final class TopCommand extends CommandBase<ItemSlotMachine> {
         return number < 1 || number > 10 ? '?' : (char) (0x2775 + number);
     }
 
-    private static ChatColor getPlacementColor(int placement) {
+    private static ColorCode getPlacementColor(int placement) {
         switch (placement) {
             case 1:
-                return ChatColor.GOLD;
+                return ColorCode.GOLD;
             case 2:
-                return ChatColor.RED;
+                return ColorCode.RED;
             case 3:
-                return ChatColor.BLUE;
+                return ColorCode.BLUE;
             default:
-                return ChatColor.GRAY;
+                return ColorCode.GRAY;
         }
     }
 
@@ -129,10 +129,10 @@ public final class TopCommand extends CommandBase<ItemSlotMachine> {
 
             String value = String.valueOf(stat.getRecord(category).getValue());
             int placement = i + 1;
-            ChatColor color = getPlacementColor(placement);
+            ColorCode color = getPlacementColor(placement);
             char symbol = getSymbol(placement);
             String line = plugin.formatMessage(Message.COMMAND_STATISTIC_TOP_LINE, color, symbol, name, value);
-            text.append("\n").append(ChatColor.RESET).append(line);
+            text.append("\n").append(ColorCode.RESET).append(line);
         }
 
         return text.toString();

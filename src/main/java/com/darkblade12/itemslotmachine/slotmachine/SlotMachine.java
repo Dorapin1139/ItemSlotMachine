@@ -26,6 +26,7 @@ import com.darkblade12.itemslotmachine.statistic.Category;
 import com.darkblade12.itemslotmachine.statistic.PlayerStatistic;
 import com.darkblade12.itemslotmachine.statistic.SlotMachineStatistic;
 import com.darkblade12.itemslotmachine.statistic.StatisticManager;
+import com.darkblade12.itemslotmachine.util.ColorCode;
 import com.darkblade12.itemslotmachine.util.Cuboid;
 import com.darkblade12.itemslotmachine.util.FileUtils;
 import com.darkblade12.itemslotmachine.util.FireworkRocket;
@@ -36,7 +37,6 @@ import com.google.common.collect.Lists;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -44,6 +44,7 @@ import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.Sign;
+import org.bukkit.block.sign.Side;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.ItemFrame;
 import org.bukkit.entity.Player;
@@ -392,7 +393,7 @@ public final class SlotMachine implements Nameable {
 
             VaultHook vault = plugin.getVaultHook();
             vault.depositPlayer(Bukkit.getOfflinePlayer(userId), moneyPrize);
-            prizeText.append(ChatColor.YELLOW).append(moneyPrize).append(vault.getCurrencyName(moneyPrize, true));
+            prizeText.append(ColorCode.YELLOW).append(moneyPrize).append(vault.getCurrencyName(moneyPrize, true));
         }
 
         Player user = getUser();
@@ -404,7 +405,7 @@ public final class SlotMachine implements Nameable {
             userStat.getRecord(Category.WON_ITEMS).increaseValue(itemPrize.size());
 
             if (prizeText.length() > 0) {
-                prizeText.append(" ").append(ChatColor.GOLD).append(plugin.formatMessage(Message.WORD_AND)).append(" ");
+                prizeText.append(" ").append(ColorCode.GOLD).append(plugin.formatMessage(Message.WORD_AND)).append(" ");
             }
             prizeText.append(MessageUtils.toString(itemPrize));
         }
@@ -465,11 +466,11 @@ public final class SlotMachine implements Nameable {
                     item.setAmount(amount - remaining);
                     break;
                 } else if (amount == remaining) {
-                    item.setType(Material.AIR);
+                    player.getInventory().setItem(i, null);
                     break;
                 }
 
-                item.setType(Material.AIR);
+                player.getInventory().setItem(i, null);
                 remaining -= amount;
                 if (remaining == 0) {
                     break;
@@ -701,7 +702,7 @@ public final class SlotMachine implements Nameable {
 
         MessageUtils.formatSignLines(lines, 0, 2);
         for (int i = 0; i < lines.length; i++) {
-            sign.setLine(i, lines[i]);
+            sign.getSide(Side.FRONT).line(i, MessageUtils.toSignComponent(lines[i]));
         }
         sign.update(true);
     }

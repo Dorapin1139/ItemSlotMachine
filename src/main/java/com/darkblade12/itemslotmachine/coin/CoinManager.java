@@ -10,12 +10,14 @@ import com.darkblade12.itemslotmachine.plugin.command.CommandBase;
 import com.darkblade12.itemslotmachine.util.ItemBuilder;
 import com.darkblade12.itemslotmachine.util.MessageUtils;
 import com.darkblade12.itemslotmachine.util.SafeLocation;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.Sign;
+import org.bukkit.block.sign.Side;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -25,10 +27,13 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerItemHeldEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
@@ -37,6 +42,9 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class CoinManager extends Manager<ItemSlotMachine> {
     private final Map<UUID, ShopInfo> lastShop;
     private ItemStack coin;
+    // 2.0.1 までに作ったコインの判定用(コインの名前と説明文を文字列に戻したもの。use-common-item のときは null)
+    private String legacyCoinName;
+    private List<String> legacyCoinLore;
     private CommandBase<ItemSlotMachine> buyCommand;
     private BukkitTask task;
 
@@ -55,6 +63,13 @@ public final class CoinManager extends Manager<ItemSlotMachine> {
             builder.withName(coinName).withLore(coinLore);
         }
         coin = builder.build();
+        legacyCoinName = null;
+        legacyCoinLore = null;
+        if (!settings.getUseCommonCoinItem()) {
+            ItemMeta meta = coin.getItemMeta();
+            legacyCoinName = MessageUtils.fromItemComponent(meta.displayName());
+            legacyCoinLore = getLore(meta);
+        }
 
         buyCommand = plugin.getCommandHandler(CoinCommandHandler.class).getCommand("buy");
         task = new BukkitRunnable() {
@@ -101,7 +116,7 @@ public final class CoinManager extends Manager<ItemSlotMachine> {
 
     private void updateShop(Player player, Location signLocation, int coins) {
         BlockState state = signLocation.getBlock().getState();
-        if (!(state instanceof Sign)) {
+        if (!(state instanceof Sign sign)) {
             return;
         }
 
@@ -116,7 +131,11 @@ public final class CoinManager extends Manager<ItemSlotMachine> {
         }
 
         String[] lines = MessageUtils.formatSignLines(getLines(coins), 2);
-        player.sendSignChange(signLocation, lines);
+        // 取得した状態はコピーなので、書き換えても実際の看板は変わらない。そのプレイヤーにだけ送る
+        for (int i = 0; i < lines.length; i++) {
+            sign.getSide(Side.FRONT).line(i, MessageUtils.toSignComponent(lines[i]));
+        }
+        player.sendBlockUpdate(signLocation, sign);
     }
 
     private void resetLastShop(UUID id) {
@@ -134,7 +153,36 @@ public final class CoinManager extends Manager<ItemSlotMachine> {
     }
 
     public boolean isCoin(ItemStack item) {
-        return item.isSimilar(coin);
+        if (item.isSimilar(coin)) {
+            return true;
+        }
+
+        // 2.0.1 までに作ったコインは名前と説明文の内部の構造が今と違い、isSimilar では一致しないため、
+        // 種類と、文字列に戻した名前・説明文で判定する
+        if (legacyCoinName == null || item.getType() != coin.getType() || !item.hasItemMeta()) {
+            return false;
+        }
+
+        ItemMeta meta = item.getItemMeta();
+        return meta.hasDisplayName() && legacyCoinName.equals(MessageUtils.fromItemComponent(meta.displayName()))
+               && legacyCoinLore.equals(getLore(meta));
+    }
+
+    // 古いコインも含めて、プレイヤーが持っているコインの数を数える
+    public int getTotalCoins(Player player) {
+        int total = 0;
+        for (ItemStack item : player.getInventory().getContents()) {
+            if (item != null && isCoin(item)) {
+                total += item.getAmount();
+            }
+        }
+
+        return total;
+    }
+
+    private static List<String> getLore(ItemMeta meta) {
+        List<Component> lore = meta.lore();
+        return lore == null ? Collections.emptyList() : MessageUtils.fromItemComponents(lore);
     }
 
     public Map<String, ItemStack> getCustomItems() {
@@ -153,19 +201,19 @@ public final class CoinManager extends Manager<ItemSlotMachine> {
     }
 
     private boolean isShop(Sign sign) {
-        return sign.getLine(0).equals(plugin.formatMessage(Message.SIGN_SHOP_HEADER));
+        return MessageUtils.fromSignComponent(sign.getSide(Side.FRONT).line(0)).equals(plugin.formatMessage(Message.SIGN_SHOP_HEADER));
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onSignChange(SignChangeEvent event) {
-        String firstLine = event.getLine(0);
+        String firstLine = MessageUtils.fromSignComponent(event.line(0));
         if (firstLine == null || !firstLine.equalsIgnoreCase("[CoinShop]") || !Permission.SHOP_CREATE.test(event.getPlayer())) {
             return;
         }
 
         String[] lines = MessageUtils.formatSignLines(getLines(1), 2);
         for (int i = 0; i < lines.length; i++) {
-            event.setLine(i, lines[i]);
+            event.line(i, MessageUtils.toSignComponent(lines[i]));
         }
     }
 

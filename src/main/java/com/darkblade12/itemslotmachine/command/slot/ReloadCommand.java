@@ -26,7 +26,7 @@ public final class ReloadCommand extends CommandBase<ItemSlotMachine> {
             }
 
             long duration = System.currentTimeMillis() - startTime;
-            String version = plugin.getDescription().getVersion();
+            String version = plugin.getVersion();
             plugin.sendMessage(sender, Message.COMMAND_SLOT_RELOAD_SUCCEEDED, version, duration);
             return;
         }

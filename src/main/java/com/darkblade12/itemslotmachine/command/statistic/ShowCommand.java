@@ -12,8 +12,8 @@ import com.darkblade12.itemslotmachine.statistic.Record;
 import com.darkblade12.itemslotmachine.statistic.SlotMachineStatistic;
 import com.darkblade12.itemslotmachine.statistic.Statistic;
 import com.darkblade12.itemslotmachine.statistic.StatisticManager;
+import com.darkblade12.itemslotmachine.util.ColorCode;
 import com.darkblade12.itemslotmachine.util.MessageUtils;
-import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;
 
@@ -101,13 +101,13 @@ public final class ShowCommand extends CommandBase<ItemSlotMachine> {
     private static String toString(PluginBase plugin, Statistic statistic) {
         StringBuilder text = new StringBuilder();
         for (Record record : statistic) {
-            ChatColor color = MessageUtils.randomColorCode();
-            ChatColor altColor = MessageUtils.similarColor(color);
+            ColorCode color = MessageUtils.randomColorCode();
+            ColorCode altColor = MessageUtils.similarColor(color);
             char dice = randomDiceSymbol();
             String category = MessageUtils.capitalize(record.getCategory().getLocalizedName(plugin));
             Number value = record.getValue();
             String line = plugin.formatMessage(Message.COMMAND_STATISTIC_SHOW_LINE, dice, color, category, altColor, value);
-            text.append("\n").append(ChatColor.RESET).append(line);
+            text.append("\n").append(ColorCode.RESET).append(line);
         }
 
         return text.toString();

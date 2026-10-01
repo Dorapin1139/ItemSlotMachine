@@ -9,8 +9,10 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
+import io.papermc.paper.potion.SuspiciousEffectEntry;
 import io.papermc.paper.registry.RegistryAccess;
 import io.papermc.paper.registry.RegistryKey;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Color;
 import org.bukkit.DyeColor;
@@ -59,6 +61,8 @@ public final class ItemStackAdapter implements JsonSerializer<ItemStack>, JsonDe
     private static final Map<String, String> LEGACY_POTION_TYPES = new HashMap<>();
     // 1.20.5 で名前が変わった旗の模様(同上。ほかの模様は小文字にするとキーと一致する)
     private static final Map<String, String> LEGACY_PATTERN_TYPES = new HashMap<>();
+    // 1.20.5 より前の効果の種類の名前のうち、キーと一致しないもの(ほかは小文字にするとキーと一致する)
+    private static final Map<String, String> LEGACY_EFFECT_TYPES = new HashMap<>();
 
     static {
         LEGACY_POTION_TYPES.put("SPEED", "swiftness");
@@ -75,6 +79,16 @@ public final class ItemStackAdapter implements JsonSerializer<ItemStack>, JsonDe
         LEGACY_PATTERN_TYPES.put("RHOMBUS_MIDDLE", "rhombus");
         LEGACY_PATTERN_TYPES.put("HALF_VERTICAL_MIRROR", "half_vertical_right");
         LEGACY_PATTERN_TYPES.put("HALF_HORIZONTAL_MIRROR", "half_horizontal_bottom");
+
+        LEGACY_EFFECT_TYPES.put("SLOW", "slowness");
+        LEGACY_EFFECT_TYPES.put("FAST_DIGGING", "haste");
+        LEGACY_EFFECT_TYPES.put("SLOW_DIGGING", "mining_fatigue");
+        LEGACY_EFFECT_TYPES.put("INCREASE_DAMAGE", "strength");
+        LEGACY_EFFECT_TYPES.put("HEAL", "instant_health");
+        LEGACY_EFFECT_TYPES.put("HARM", "instant_damage");
+        LEGACY_EFFECT_TYPES.put("JUMP", "jump_boost");
+        LEGACY_EFFECT_TYPES.put("CONFUSION", "nausea");
+        LEGACY_EFFECT_TYPES.put("DAMAGE_RESISTANCE", "resistance");
     }
 
     @Override
@@ -89,11 +103,11 @@ public final class ItemStackAdapter implements JsonSerializer<ItemStack>, JsonDe
 
             assert meta != null;
             if (meta.hasDisplayName()) {
-                metaObj.addProperty("displayName", meta.getDisplayName());
+                metaObj.addProperty("displayName", MessageUtils.fromItemComponent(meta.displayName()));
             }
 
             if (meta.hasLore()) {
-                metaObj.add("lore", GSON.toJsonTree(meta.getLore()));
+                metaObj.add("lore", GSON.toJsonTree(MessageUtils.fromItemComponents(meta.lore())));
             }
 
             if (meta.hasEnchants()) {
@@ -164,7 +178,7 @@ public final class ItemStackAdapter implements JsonSerializer<ItemStack>, JsonDe
             JsonObject metaObj = obj.get("meta").getAsJsonObject();
 
             if (metaObj.has("displayName")) {
-                meta.setDisplayName(metaObj.get("displayName").getAsString());
+                meta.displayName(MessageUtils.toItemComponent(metaObj.get("displayName").getAsString()));
             }
 
             if (metaObj.has("lore")) {
@@ -173,7 +187,7 @@ public final class ItemStackAdapter implements JsonSerializer<ItemStack>, JsonDe
                 for (JsonElement line : loreArray) {
                     lore.add(line.getAsString());
                 }
-                meta.setLore(lore);
+                meta.lore(MessageUtils.toItemComponents(lore));
             }
 
             if (metaObj.has("enchants")) {
@@ -242,7 +256,7 @@ public final class ItemStackAdapter implements JsonSerializer<ItemStack>, JsonDe
         }
 
         if (meta.hasPages()) {
-            root.add("pages", GSON.toJsonTree(meta.getPages()));
+            root.add("pages", GSON.toJsonTree(MessageUtils.fromItemComponents(meta.pages())));
         }
     }
 
@@ -369,7 +383,7 @@ public final class ItemStackAdapter implements JsonSerializer<ItemStack>, JsonDe
         if (source.has("pages")) {
             JsonArray pagesArray = source.getAsJsonArray("pages");
             List<String> pages = deserializeList(pagesArray, JsonElement::getAsString);
-            meta.setPages(pages);
+            meta.addPages(MessageUtils.toItemComponents(pages).toArray(new Component[0]));
         }
     }
 
@@ -453,7 +467,7 @@ public final class ItemStackAdapter implements JsonSerializer<ItemStack>, JsonDe
             JsonArray effectsArray = source.getAsJsonArray("customEffects");
             List<PotionEffect> effects = deserializeList(effectsArray, e -> deserializePotionEffect(e.getAsJsonObject()));
             for (PotionEffect effect : effects) {
-                meta.addCustomEffect(effect, true);
+                meta.addCustomEffect(SuspiciousEffectEntry.create(effect.getType(), effect.getDuration()), true);
             }
         }
     }
@@ -462,7 +476,7 @@ public final class ItemStackAdapter implements JsonSerializer<ItemStack>, JsonDe
         Set<Entry<String, JsonElement>> entries = obj.entrySet();
         Map<Enchantment, Integer> enchants = new HashMap<>(entries.size());
         for (Entry<String, JsonElement> enchant : entries) {
-            Enchantment ench = Enchantment.getByKey(NamespacedKey.minecraft(enchant.getKey()));
+            Enchantment ench = getRegistryEntry(RegistryKey.ENCHANTMENT, enchant.getKey());
             if (ench == null) {
                 throw new JsonParseException("Invalid enchantment name");
             }
@@ -588,10 +602,7 @@ public final class ItemStackAdapter implements JsonSerializer<ItemStack>, JsonDe
         int duration = obj.get("duration").getAsInt();
         // 新しい形式はキー(minecraft:speed)、古い形式は名前(SPEED)
         String typeName = obj.get("type").getAsString();
-        PotionEffectType type = getRegistryEntry(RegistryKey.MOB_EFFECT, typeName);
-        if (type == null) {
-            type = PotionEffectType.getByName(typeName);
-        }
+        PotionEffectType type = getRegistryEntry(RegistryKey.MOB_EFFECT, LEGACY_EFFECT_TYPES.getOrDefault(typeName, typeName));
         if (type == null) {
             throw new JsonParseException("Invalid potion effect type");
         }

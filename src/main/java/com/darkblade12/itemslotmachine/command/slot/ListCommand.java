@@ -6,7 +6,7 @@ import com.darkblade12.itemslotmachine.plugin.Message;
 import com.darkblade12.itemslotmachine.plugin.command.CommandBase;
 import com.darkblade12.itemslotmachine.slotmachine.SlotMachine;
 import com.darkblade12.itemslotmachine.slotmachine.SlotMachineManager;
-import org.bukkit.ChatColor;
+import com.darkblade12.itemslotmachine.util.ColorCode;
 import org.bukkit.command.CommandSender;
 
 import java.util.List;
@@ -28,7 +28,7 @@ public final class ListCommand extends CommandBase<ItemSlotMachine> {
         for (SlotMachine slot : slots) {
             String spinning = (slot.isSpinning() ? "\u00A7a\u2714" : "\u00A7c\u2718");
             String line = plugin.formatMessage(Message.COMMAND_SLOT_LIST_LINE, slot.getName(), spinning);
-            list.append("\n").append(ChatColor.RESET).append(line);
+            list.append("\n").append(ColorCode.RESET).append(line);
         }
 
         plugin.sendMessage(sender, Message.COMMAND_SLOT_LIST_DISPLAYED, list.toString());

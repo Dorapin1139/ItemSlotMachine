@@ -5,8 +5,8 @@ import com.darkblade12.itemslotmachine.Permission;
 import com.darkblade12.itemslotmachine.design.DesignManager;
 import com.darkblade12.itemslotmachine.plugin.Message;
 import com.darkblade12.itemslotmachine.plugin.command.CommandBase;
+import com.darkblade12.itemslotmachine.util.ColorCode;
 import com.darkblade12.itemslotmachine.util.MessageUtils;
-import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 
 import java.util.List;
@@ -27,9 +27,9 @@ public final class ListCommand extends CommandBase<ItemSlotMachine> {
         List<String> names = designManager.getNames();
         StringBuilder list = new StringBuilder();
         for (String name : names) {
-            ChatColor color = MessageUtils.randomColorCode();
+            ColorCode color = MessageUtils.randomColorCode();
             String line = plugin.formatMessage(Message.COMMAND_DESIGN_LIST_LINE, color, name);
-            list.append("\n").append(ChatColor.RESET).append(line);
+            list.append("\n").append(ColorCode.RESET).append(line);
         }
 
         plugin.sendMessage(sender, Message.COMMAND_DESIGN_LIST_DISPLAYED, list.toString());

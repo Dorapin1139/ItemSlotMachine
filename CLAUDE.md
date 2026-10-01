@@ -36,8 +36,8 @@
   - IntelliJ の「アーティファクトのビルド」はクラスファイルが入らないことがある。必ず Gradle でビルドする
 - その他の依存: VaultAPI 1.7(compileOnly、jitpack)のみ。jar に同梱するライブラリはない
 - バージョンは `gradle.properties` の `version`。`plugin.yml` の `${version}` に `processResources` で埋め込む。`api-version: '1.21.11'`
-- commons-lang などの外部ユーティリティは使わず、Java 標準で書く(Paper 1.21.11 に commons-lang 2 はない)。`capitalize` と `unescapeJava` は `util/MessageUtils` にある
-- 削除予定(`forRemoval`)の API は使わない。レジストリの要素は `RegistryAccess.registryAccess().getRegistry(RegistryKey.…)` で引く(`Registry.BANNER_PATTERN` や `PatternType.getKey()` なども非推奨)。`-Xlint:deprecation` を付けると、ほかに非推奨(削除予定ではない)の警告が多数出るが、これはフォーク元からの既存のもの
+- commons-lang などの外部ユーティリティは使わず、Java 標準で書く(Paper 1.21.11 に commons-lang 2 はない)。`capitalize` と `unescapeJava`、`ChatColor` の代わりの `translateAlternateColorCodes`・`stripColor` は `util/MessageUtils` にある
+- 削除予定(`forRemoval`)の API は使わない。レジストリの要素は `RegistryAccess.registryAccess().getRegistry(RegistryKey.…)` で引く(`Registry.BANNER_PATTERN` や `PatternType.getKey()` なども非推奨)。非推奨(削除予定ではない)の API も使わない(2.0.2 で `-Xlint:all` の警告を 0 件にした)
 - softdepend: Vault, Multiverse-Core, Multiworld, PlotMe, MyWorlds, Essentials
 - パッケージ名は**すべて小文字**のままにする。大文字が混ざると plugin.yml の main と一致せず起動しない
 - 動作確認はサーバーを再起動して行う。PlugManX での読み込みは権限やコマンドの登録が不完全になることがある
@@ -62,6 +62,7 @@
 - プラグインフォルダ以外には何も書き込まない
 - スロットマシン・デザイン・統計・コインショップの保存形式を変えるときは、既存データの読み込み(移行)を必ず考える。サーバー上に既存のデータがある前提
 - アイテム(ポットの中身など)は `util/ItemStackAdapter` で JSON にする。ポーションの種類・追加効果・旗の模様は名前空間付きのキー(`minecraft:swiftness` など)で書き、フォーク元の古い形式(`basePotionData`、列挙名)も読めるようにしてある
+- アイテムの名前・説明文・本のページは Component 版 API で扱い、文字列との変換は必ず `MessageUtils.toItemComponent`/`fromItemComponent` を使う(斜体を外す。旧 String 版 API と見た目をそろえるため)。看板は `toSignComponent`/`fromSignComponent`(Paper の看板の String 版 API と同じ変換)。作り方が変わるとアイテムが `isSimilar` で一致しなくなる(2.0.2 で名前の内部構造が変わり、2.0.1 以前のコインは `CoinManager.isCoin` で名前・説明文の文字列を比べて判定している。杖はもらい直しが必要)
 
 ### 他プラグインとの関係
 - 経済は Vault 経由。Vault がない環境でも起動できる状態を保つ

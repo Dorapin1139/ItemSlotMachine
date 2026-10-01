@@ -6,6 +6,7 @@ import com.darkblade12.itemslotmachine.command.DesignCommandHandler;
 import com.darkblade12.itemslotmachine.command.SlotCommandHandler;
 import com.darkblade12.itemslotmachine.command.StatisticCommandHandler;
 import com.darkblade12.itemslotmachine.design.DesignManager;
+import com.darkblade12.itemslotmachine.plugin.MessageManager;
 import com.darkblade12.itemslotmachine.plugin.PluginBase;
 import com.darkblade12.itemslotmachine.plugin.hook.VaultHook;
 import com.darkblade12.itemslotmachine.slotmachine.SlotMachine;
@@ -22,7 +23,8 @@ public final class ItemSlotMachine extends PluginBase {
     private final VaultHook vaultHook;
 
     public ItemSlotMachine() {
-        super(Locale.US, Locale.GERMANY);
+        // メッセージはほかのマネージャーより先に読み込む
+        registerManager(new MessageManager(this, Locale.US, Locale.GERMANY));
         settings = new Settings(this);
         vaultHook = new VaultHook(this);
 

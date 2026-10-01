@@ -5,7 +5,6 @@ import com.darkblade12.itemslotmachine.util.MessageUtils;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
-import org.bukkit.ChatColor;
 
 import java.io.File;
 import java.io.IOException;
@@ -111,7 +110,7 @@ public final class MessageManager extends Manager<PluginBase> {
             }
 
             String text = MessageUtils.unescapeJava(entry.getValue().getAsString());
-            MessageFormat format = new MessageFormat(ChatColor.translateAlternateColorCodes('&', text));
+            MessageFormat format = new MessageFormat(MessageUtils.translateAlternateColorCodes('&', text));
             messageCache.put(message, format);
             if (missing == null && message == Message.MESSAGE_MISSING) {
                 missing = format;

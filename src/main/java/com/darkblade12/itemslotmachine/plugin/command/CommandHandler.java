@@ -21,13 +21,14 @@ public abstract class CommandHandler<T extends PluginBase> implements CommandExe
     protected final T plugin;
     protected final String defaultLabel;
     protected final Map<String, CommandBase<T>> commands;
-    protected final HelpCommand<T> help;
+    private final int helpPageSize;
+    protected HelpCommand<T> help;
 
     protected CommandHandler(T plugin, String defaultLabel, int helpPageSize) {
         this.plugin = plugin;
         this.defaultLabel = defaultLabel;
+        this.helpPageSize = helpPageSize;
         commands = new LinkedHashMap<>();
-        help = new HelpCommand<>(this, helpPageSize);
     }
 
     protected CommandHandler(T plugin, String defaultLabel) {
@@ -35,6 +36,8 @@ public abstract class CommandHandler<T extends PluginBase> implements CommandExe
     }
 
     public void enable() throws CommandRegistrationException {
+        // コンストラクタで作ると、初期化が終わる前の this を渡すことになる(this-escape)ため、ここで作る
+        help = new HelpCommand<>(this, helpPageSize);
         registerCommand(help);
         registerCommands();
         registerExecutor();
