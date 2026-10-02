@@ -12,6 +12,7 @@
 
 - Paper 1.21.11 / Java 21 に対応し、ビルドを Maven から Gradle に変更
 - bStats による統計情報の送信と、CurseForge への更新チェックを削除(外部と通信しません)
+- 日本語のメッセージ(`ja-JP`)を同梱
 
 ## 主な機能
 
@@ -105,7 +106,7 @@ IntelliJ IDEA 上で正しくプラグイン（JARファイル）を生成する
 | 項目 | 既定値 | 説明 |
 |---|---|---|
 | `debug-mode-enabled` | `false` | `true` にすると、エラーの詳細(スタックトレース)をコンソールに出します |
-| `language-tag` | `'en-US'` | 使うメッセージファイル(`messages_<タグ>.json`)。同梱は `en-US`(英語)と `de-DE`(ドイツ語) |
+| `language-tag` | `'en-US'` | 使うメッセージファイル(`messages_<タグ>.json`)。同梱は `en-US`(英語)、`de-DE`(ドイツ語)、`ja-JP`(日本語) |
 | `design.name-pattern` | `'design{0}'` | `/design create` で名前を省略したときの名前。`{0}` に番号が入ります |
 | `design.space-check.enabled` | `true` | スロットマシンを建てる範囲にブロックがあるとき、建てるのを止めます。`false` にすると範囲内のブロックを**すべて置き換えます** |
 | `design.space-check.ignored-types` | `['snow', 'short_grass', ...]` | 上のチェックで無視するブロック(雪や草など) |
@@ -196,7 +197,7 @@ OP 以外のプレイヤーに使わせるには、LuckPerms などの権限プ�
 | `/statistic top <slot/player> <項目>` | 項目ごとのランキングを表示する | `itemslotmachine.command.statistic.top` |
 | `/statistic reset <slot/player> <名前>` | 統計をリセットする | `itemslotmachine.command.statistic.reset` |
 
-`top` の項目は、`language-tag` が `en-US` のとき `total spins`、`won spins`、`lost spins`、`spent coins`、`won money`、`won items` です(スロットマシンで使えるのは最初の 3 つ)。
+`top` の項目は `total spins`、`won spins`、`lost spins`、`spent coins`、`won money`、`won items` です(スロットマシンで使えるのは最初の 3 つ)。どの言語でもこの英語名で指定でき、`language-tag` が `ja-JP` のときは `総スピン数`、`当たり回数`、`はずれ回数`、`使ったコイン`、`獲得したお金`、`獲得したアイテム` でも指定できます。
 
 ## 権限
 

@@ -24,7 +24,7 @@ public final class ItemSlotMachine extends PluginBase {
 
     public ItemSlotMachine() {
         // メッセージはほかのマネージャーより先に読み込む
-        registerManager(new MessageManager(this, Locale.US, Locale.GERMANY));
+        registerManager(new MessageManager(this, Locale.US, Locale.GERMANY, Locale.JAPAN));
         settings = new Settings(this);
         vaultHook = new VaultHook(this);
 
