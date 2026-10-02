@@ -2,6 +2,7 @@ package com.darkblade12.itemslotmachine.command.slot;
 
 import com.darkblade12.itemslotmachine.ItemSlotMachine;
 import com.darkblade12.itemslotmachine.Permission;
+import com.darkblade12.itemslotmachine.design.DesignSpaceException;
 import com.darkblade12.itemslotmachine.plugin.Message;
 import com.darkblade12.itemslotmachine.plugin.command.CommandBase;
 import com.darkblade12.itemslotmachine.reference.Direction;
@@ -49,6 +50,11 @@ public class MoveCommand extends CommandBase<ItemSlotMachine> {
         try {
             slot.move(moveDirection, amount);
         } catch (SlotMachineException e) {
+            // 空き不足は想定内の失敗なので、スタックトレースは出さずに邪魔なブロックを伝えるだけにする
+            if (e.getCause() instanceof DesignSpaceException) {
+                plugin.sendMessage(player, Message.COMMAND_SLOT_MOVE_FAILED, name, e.getCause().getMessage());
+                return;
+            }
             plugin.logException(e, "Failed to move slot machine %s!", name);
             plugin.sendMessage(player, Message.COMMAND_SLOT_MOVE_FAILED, name, e.getMessage());
             return;

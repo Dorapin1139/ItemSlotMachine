@@ -4,6 +4,7 @@ import com.darkblade12.itemslotmachine.ItemSlotMachine;
 import com.darkblade12.itemslotmachine.Permission;
 import com.darkblade12.itemslotmachine.design.Design;
 import com.darkblade12.itemslotmachine.design.DesignManager;
+import com.darkblade12.itemslotmachine.design.DesignSpaceException;
 import com.darkblade12.itemslotmachine.plugin.Message;
 import com.darkblade12.itemslotmachine.plugin.command.CommandBase;
 import com.darkblade12.itemslotmachine.slotmachine.SlotMachine;
@@ -44,6 +45,10 @@ public final class BuildCommand extends CommandBase<ItemSlotMachine> {
 
         try {
             slotManager.register(SlotMachine.create(plugin, name, design, player));
+        } catch (DesignSpaceException e) {
+            // 空き不足は想定内の失敗なので、スタックトレースは出さずにプレイヤーへ伝えるだけにする
+            plugin.sendMessage(player, Message.COMMAND_SLOT_BUILD_FAILED, name, designName, e.getMessage());
+            return;
         } catch (Exception e) {
             plugin.logException(e, "Failed to build slot machine %s with design %s!", name, designName);
             plugin.sendMessage(player, Message.COMMAND_SLOT_BUILD_FAILED, name, designName, e.getMessage());

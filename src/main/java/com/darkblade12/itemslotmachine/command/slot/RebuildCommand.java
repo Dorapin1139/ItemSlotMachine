@@ -3,6 +3,7 @@ package com.darkblade12.itemslotmachine.command.slot;
 import com.darkblade12.itemslotmachine.ItemSlotMachine;
 import com.darkblade12.itemslotmachine.Permission;
 import com.darkblade12.itemslotmachine.design.DesignBuildException;
+import com.darkblade12.itemslotmachine.design.DesignSpaceException;
 import com.darkblade12.itemslotmachine.plugin.Message;
 import com.darkblade12.itemslotmachine.plugin.command.CommandBase;
 import com.darkblade12.itemslotmachine.slotmachine.SlotMachine;
@@ -28,6 +29,10 @@ public final class RebuildCommand extends CommandBase<ItemSlotMachine> {
 
         try {
             slot.rebuild();
+        } catch (DesignSpaceException e) {
+            // 空き不足は想定内の失敗なので、スタックトレースは出さずに伝えるだけにする
+            plugin.sendMessage(sender, Message.COMMAND_SLOT_REBUILD_FAILED, name, e.getMessage());
+            return;
         } catch (DesignBuildException e) {
             plugin.logException(e, "Failed to rebuild slot machine %s!", name);
             plugin.sendMessage(sender, Message.COMMAND_SLOT_REBUILD_FAILED, name, e.getMessage());

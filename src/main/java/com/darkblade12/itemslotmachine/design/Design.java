@@ -120,8 +120,11 @@ public final class Design implements Nameable {
             List<Material> ignoredTypes = settings.getSpaceCheckIgnoredTypes();
             for (Block block : cuboid) {
                 Material material = block.getType();
-                if (material != Material.AIR && !ignoredTypes.contains(material)) {
-                    throw new DesignBuildException("There is not enough space for this design.");
+                // CAVE_AIR や VOID_AIR も空きとみなす
+                if (!material.isAir() && !ignoredTypes.contains(material)) {
+                    // 邪魔をしているブロックの種類と座標を伝える
+                    throw new DesignSpaceException(String.format("There is not enough space for this design. (%s at %d, %d, %d)",
+                                                                 material.getKey(), block.getX(), block.getY(), block.getZ()));
                 }
             }
         }

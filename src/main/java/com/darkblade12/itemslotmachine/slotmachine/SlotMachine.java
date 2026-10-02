@@ -7,6 +7,7 @@ import com.darkblade12.itemslotmachine.coin.CoinManager;
 import com.darkblade12.itemslotmachine.design.Design;
 import com.darkblade12.itemslotmachine.design.DesignBuildException;
 import com.darkblade12.itemslotmachine.design.DesignIncompleteException;
+import com.darkblade12.itemslotmachine.design.DesignSpaceException;
 import com.darkblade12.itemslotmachine.nameable.Nameable;
 import com.darkblade12.itemslotmachine.plugin.Message;
 import com.darkblade12.itemslotmachine.plugin.hook.VaultHook;
@@ -633,7 +634,10 @@ public final class SlotMachine implements Nameable {
             buildLocation = SafeLocation.fromBukkitLocation(newLocation);
             saveAndUpdate();
         } catch (DesignBuildException | IOException e) {
-            design.dismantle(newLocation, buildDirection);
+            // 空き不足のときは移動先に何も置いていないので、移動先にあるほかのブロックや額縁を消さないよう解体しない
+            if (!(e instanceof DesignSpaceException)) {
+                design.dismantle(newLocation, buildDirection);
+            }
             buildLocation = SafeLocation.fromBukkitLocation(oldLocation);
 
             try {
