@@ -467,17 +467,16 @@ public final class SlotMachine implements Nameable {
                     item.setAmount(amount - remaining);
                     break;
                 } else if (amount == remaining) {
-                    player.getInventory().setItem(i, null);
+                    // 最後に setContents で書き戻すので、配列の側を空にする
+                    invContents[i] = null;
                     break;
                 }
 
-                player.getInventory().setItem(i, null);
+                invContents[i] = null;
                 remaining -= amount;
                 if (remaining == 0) {
                     break;
                 }
-
-                invContents[i] = item;
             }
         }
         player.getInventory().setContents(invContents);
