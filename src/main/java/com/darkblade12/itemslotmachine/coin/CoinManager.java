@@ -13,6 +13,7 @@ import com.darkblade12.itemslotmachine.util.SafeLocation;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.Tag;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
@@ -210,8 +211,13 @@ public final class CoinManager extends Manager<ItemSlotMachine> {
         int previous = event.getPreviousSlot();
         int next = event.getNewSlot();
         Player player = event.getPlayer();
+        if (next == previous) {
+            return;
+        }
+
         Block target = player.getTargetBlockExact(6);
-        if (next == previous || target == null) {
+        // 看板以外ではスナップショットを作らない
+        if (target == null || !Tag.SIGNS.isTagged(target.getType())) {
             return;
         }
 
@@ -248,6 +254,11 @@ public final class CoinManager extends Manager<ItemSlotMachine> {
     public void onPlayerInteract(PlayerInteractEvent event) {
         Block block = event.getClickedBlock();
         if (event.getHand() == EquipmentSlot.OFF_HAND || event.getAction() != Action.RIGHT_CLICK_BLOCK || block == null) {
+            return;
+        }
+
+        // 看板以外ではスナップショットを作らない
+        if (!Tag.SIGNS.isTagged(block.getType())) {
             return;
         }
 
