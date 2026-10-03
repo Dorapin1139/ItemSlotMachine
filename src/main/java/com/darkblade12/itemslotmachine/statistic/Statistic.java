@@ -6,7 +6,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.stream.Collectors;
 
@@ -29,6 +31,25 @@ public abstract class Statistic implements Iterable<Record> {
 
     public void reset() {
         records.forEach(Record::resetValue);
+    }
+
+    // リセットに失敗したときに戻せるよう、現在の値を控える
+    public Map<Category, Number> snapshotValues() {
+        Map<Category, Number> values = new HashMap<>();
+        for (Record record : records) {
+            values.put(record.getCategory(), record.getValue());
+        }
+
+        return values;
+    }
+
+    public void restoreValues(Map<Category, Number> values) {
+        for (Record record : records) {
+            Number value = values.get(record.getCategory());
+            if (value != null) {
+                record.setValue(value);
+            }
+        }
     }
 
     public void saveFile(File directory) throws IOException {
