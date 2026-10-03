@@ -437,18 +437,9 @@ public final class SlotMachine implements Nameable {
             return true;
         }
 
-        CoinManager coinManager = plugin.getManager(CoinManager.class);
-        int remaining = settings.coinAmount;
-        for (ItemStack item : player.getInventory().getContents()) {
-            if (item != null && coinManager.isCoin(item)) {
-                if (remaining == 0 || item.getAmount() >= remaining) {
-                    return true;
-                }
-                remaining -= item.getAmount();
-            }
-        }
-
-        return false;
+        // 手に持っているコインだけで払う(ほかのスロットのコインは使わない)
+        ItemStack hand = player.getInventory().getItemInMainHand();
+        return plugin.getManager(CoinManager.class).isCoin(hand) && hand.getAmount() >= settings.coinAmount;
     }
 
     private void removeCoins(Player player) {
@@ -456,30 +447,15 @@ public final class SlotMachine implements Nameable {
             return;
         }
 
-        CoinManager coinManager = plugin.getManager(CoinManager.class);
-        int remaining = settings.coinAmount;
-        ItemStack[] invContents = player.getInventory().getContents();
-        for (int i = 0; i < invContents.length; i++) {
-            ItemStack item = invContents[i];
-            if (item != null && coinManager.isCoin(item)) {
-                int amount = item.getAmount();
-                if (amount > remaining) {
-                    item.setAmount(amount - remaining);
-                    break;
-                } else if (amount == remaining) {
-                    // 最後に setContents で書き戻すので、配列の側を空にする
-                    invContents[i] = null;
-                    break;
-                }
-
-                invContents[i] = null;
-                remaining -= amount;
-                if (remaining == 0) {
-                    break;
-                }
-            }
+        // 手に持っているコインから減らす(枚数は hasEnoughCoins で確認済み)
+        ItemStack hand = player.getInventory().getItemInMainHand();
+        int amount = hand.getAmount() - settings.coinAmount;
+        if (amount > 0) {
+            hand.setAmount(amount);
+            player.getInventory().setItemInMainHand(hand);
+        } else {
+            player.getInventory().setItemInMainHand(null);
         }
-        player.getInventory().setContents(invContents);
     }
 
     public void setMoneyPot(double moneyPot) {

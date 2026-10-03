@@ -314,7 +314,7 @@ public final class SlotMachineManager extends Manager<ItemSlotMachine> {
                     String plural = plugin.formatMessage(Message.WORD_COIN_PLURAL);
                     int required = slot.getSettings().coinAmount;
                     String requiredCoins = required == 1 ? singular : plural;
-                    int current = coinManager.getTotalCoins(player);
+                    int current = hand.getAmount();
                     String currentCoins = current == 1 ? singular : plural;
                     plugin.sendMessage(player, Message.SLOT_MACHINE_NOT_ENOUGH_COINS, required, requiredCoins, current,
                                        currentCoins);

@@ -168,18 +168,6 @@ public final class CoinManager extends Manager<ItemSlotMachine> {
                && legacyCoinLore.equals(getLore(meta));
     }
 
-    // 古いコインも含めて、プレイヤーが持っているコインの数を数える
-    public int getTotalCoins(Player player) {
-        int total = 0;
-        for (ItemStack item : player.getInventory().getContents()) {
-            if (item != null && isCoin(item)) {
-                total += item.getAmount();
-            }
-        }
-
-        return total;
-    }
-
     private static List<String> getLore(ItemMeta meta) {
         List<Component> lore = meta.lore();
         return lore == null ? Collections.emptyList() : MessageUtils.fromItemComponents(lore);
