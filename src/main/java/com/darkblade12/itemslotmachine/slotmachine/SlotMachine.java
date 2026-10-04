@@ -752,6 +752,11 @@ public final class SlotMachine implements Nameable {
         return cached.isInside(location);
     }
 
+    // ポットを表示する看板の位置かどうか(台の範囲内にあるほかの看板は含まない)
+    public boolean isPotSign(Location location) {
+        return design.getSign().toBukkitLocation(getLocation(), buildDirection).equals(location);
+    }
+
     public boolean isInteraction(Location location) {
         return design.getSlot().toBukkitLocation(getLocation(), buildDirection).equals(location);
     }

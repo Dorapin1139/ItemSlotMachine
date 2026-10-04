@@ -14,7 +14,6 @@ import com.google.gson.JsonParseException;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.Tag;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Hanging;
@@ -276,7 +275,7 @@ public final class SlotMachineManager extends Manager<ItemSlotMachine> {
                 }
 
                 // 看板の文字は updateSign() が上書きするので、染料・墨・ミツロウも権限に関係なく全員止める
-                if (Tag.SIGNS.isTagged(clickedBlock.getType()) && isSignModifier(hand.getType())) {
+                if (isSignModifier(hand.getType()) && slot.isPotSign(clickedLoc)) {
                     event.setCancelled(true);
                     return;
                 }
@@ -350,12 +349,10 @@ public final class SlotMachineManager extends Manager<ItemSlotMachine> {
     // 看板の文字は updateSign() が上書きするので、編集画面は権限に関係なく全員に開かせない
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onPlayerSignOpen(PlayerSignOpenEvent event) {
-        SlotMachine slot = getSlotMachine(event.getSign().getLocation());
-        if (slot == null) {
-            return;
+        Location location = event.getSign().getLocation();
+        if (slots.stream().anyMatch(s -> s.isPotSign(location))) {
+            event.setCancelled(true);
         }
-
-        event.setCancelled(true);
     }
 
     @EventHandler(priority = EventPriority.NORMAL)
