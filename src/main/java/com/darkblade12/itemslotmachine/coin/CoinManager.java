@@ -217,7 +217,7 @@ public final class CoinManager extends Manager<ItemSlotMachine> {
 
         Block target = player.getTargetBlockExact(6);
         // 看板以外ではスナップショットを作らない
-        if (target == null || !Tag.SIGNS.isTagged(target.getType())) {
+        if (target == null || !Tag.ALL_SIGNS.isTagged(target.getType())) {
             return;
         }
 
@@ -258,7 +258,7 @@ public final class CoinManager extends Manager<ItemSlotMachine> {
         }
 
         // 看板以外ではスナップショットを作らない
-        if (!Tag.SIGNS.isTagged(block.getType())) {
+        if (!Tag.ALL_SIGNS.isTagged(block.getType())) {
             return;
         }
 
