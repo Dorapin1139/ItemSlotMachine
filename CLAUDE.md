@@ -26,7 +26,7 @@
 
 - 既存コードのコメント・ログ・識別子は英語。既存の英語コメントは書き換えない。追加するコメントは日本語でよい。
 - プレイヤー向けメッセージは `src/main/resources/messages_<タグ>.json` にある(同梱は `en-US`・`de-DE`・`ja-JP`。同梱する言語は `ItemSlotMachine.java` の `MessageManager` に `Locale` を渡して登録する)。文言を追加・変更するときは、使っている言語ファイルだけでなく同梱の全ファイルにキーを足す(キーが欠けると表示できない)。
-- パッケージ名 `com.darkblade12.itemslotmachine` などフォーク元の表記は、頼まれない限り変えない。`plugin.yml` は `authors: [DarkBlade12, kubotan]`、`website` はこのリポジトリの URL にしてある。
+- パッケージ名 `com.darkblade12.itemslotmachine` などフォーク元の表記は、頼まれない限り変えない。`plugin.yml` は `authors: [DarkBlade12, kubotan, tash087]`、`website` はこのリポジトリの URL にしてある。
 - ライセンスは GPL-3.0 なので、フォーク元の著作権表示を消さない。
 
 ## 環境
