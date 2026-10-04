@@ -14,6 +14,7 @@ import com.google.gson.JsonParseException;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.Tag;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Hanging;
@@ -30,6 +31,7 @@ import org.bukkit.event.hanging.HangingPlaceEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.PlayerSignOpenEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 
@@ -273,6 +275,12 @@ public final class SlotMachineManager extends Manager<ItemSlotMachine> {
                     return;
                 }
 
+                // 看板の文字は updateSign() が上書きするので、染料・墨・ミツロウも権限に関係なく全員止める
+                if (Tag.SIGNS.isTagged(clickedBlock.getType()) && isSignModifier(hand.getType())) {
+                    event.setCancelled(true);
+                    return;
+                }
+
                 CoinManager coinManager = plugin.getManager(CoinManager.class);
                 boolean holdingUseItem = !hand.getType().isBlock() || hand.getType() == Material.AIR;
                 boolean holdingCoin = coinManager.isCoin(hand);
@@ -332,6 +340,22 @@ public final class SlotMachineManager extends Manager<ItemSlotMachine> {
             default:
                 break;
         }
+    }
+
+    private static boolean isSignModifier(Material type) {
+        return type == Material.INK_SAC || type == Material.GLOW_INK_SAC || type == Material.HONEYCOMB
+            || type.name().endsWith("_DYE");
+    }
+
+    // 看板の文字は updateSign() が上書きするので、編集画面は権限に関係なく全員に開かせない
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onPlayerSignOpen(PlayerSignOpenEvent event) {
+        SlotMachine slot = getSlotMachine(event.getSign().getLocation());
+        if (slot == null) {
+            return;
+        }
+
+        event.setCancelled(true);
     }
 
     @EventHandler(priority = EventPriority.NORMAL)
