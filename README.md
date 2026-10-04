@@ -54,7 +54,7 @@ IntelliJ IDEA 上で正しくプラグイン（JARファイル）を生成する
 ### 📦 生成されたファイルの場所
 ビルドが成功すると、プロジェクトのルート直下に `build/libs` フォルダが作成（または更新）され、その中に中身の詰まった正しい JAR ファイルが生成されます。
 
-* **生成先:** `build/libs/ItemSlotMachine-2.0.5.jar`
+* **生成先:** `build/libs/ItemSlotMachine-2.0.6.jar`
 
 この JAR ファイルを Minecraft サーバーの `plugins` フォルダに配置してください。
 
@@ -208,7 +208,7 @@ OP 以外のプレイヤーに使わせるには、LuckPerms などの権限プ�
 |---|---|
 | `itemslotmachine.slot.use` | スロットマシンで遊ぶ。**既定で全員が持っています**(`plugin.yml` で `default: true`)。遊ばせたくないプレイヤーやグループには、権限プラグインで false にしてください |
 | `itemslotmachine.slot.use.<名前>` | `individual-permission: true` のスロットマシンで遊ぶ(既定は OP のみ) |
-| `itemslotmachine.slot.modify.<名前>` | スロットマシンのブロックや額縁を壊す・変える(持っていない人からは保護されます) |
+| `itemslotmachine.slot.modify.<名前>` | スロットマシンのブロックや額縁を壊す・変える(持っていない人からは保護されます)。ポットを表示する看板は、文字が自動で書き換わるので、この権限があっても編集や染色はできません |
 | `itemslotmachine.slot.inspect` | コイン以外のアイテム(ブロック以外)や素手でジュークボックスを右クリックし、スロットマシンの名前を確認する |
 | `itemslotmachine.shop.create` | コインショップの看板を作る |
 

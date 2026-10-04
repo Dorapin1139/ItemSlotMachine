@@ -30,6 +30,7 @@ import org.bukkit.event.hanging.HangingPlaceEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.PlayerSignOpenEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 
@@ -273,6 +274,12 @@ public final class SlotMachineManager extends Manager<ItemSlotMachine> {
                     return;
                 }
 
+                // 看板の文字は updateSign() が上書きするので、染料・墨・ミツロウも権限に関係なく全員止める
+                if (isSignModifier(hand.getType()) && slot.isPotSign(clickedLoc)) {
+                    event.setCancelled(true);
+                    return;
+                }
+
                 CoinManager coinManager = plugin.getManager(CoinManager.class);
                 boolean holdingUseItem = !hand.getType().isBlock() || hand.getType() == Material.AIR;
                 boolean holdingCoin = coinManager.isCoin(hand);
@@ -331,6 +338,20 @@ public final class SlotMachineManager extends Manager<ItemSlotMachine> {
                 break;
             default:
                 break;
+        }
+    }
+
+    private static boolean isSignModifier(Material type) {
+        return type == Material.INK_SAC || type == Material.GLOW_INK_SAC || type == Material.HONEYCOMB
+            || type.name().endsWith("_DYE");
+    }
+
+    // 看板の文字は updateSign() が上書きするので、編集画面は権限に関係なく全員に開かせない
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onPlayerSignOpen(PlayerSignOpenEvent event) {
+        Location location = event.getSign().getLocation();
+        if (slots.stream().anyMatch(s -> s.isPotSign(location))) {
+            event.setCancelled(true);
         }
     }
 

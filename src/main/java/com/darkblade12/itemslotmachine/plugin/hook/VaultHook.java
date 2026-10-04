@@ -106,7 +106,7 @@ public final class VaultHook extends Hook<PluginBase> {
             return permission.getPrimaryGroup(player);
         } catch (Exception ex) {
             if (base.isDebugEnabled()) {
-                ex.printStackTrace();
+                base.logException(ex, "Failed to get the primary group of player %s!", player.getName());
             }
             return DEFAULT_GROUP;
         }

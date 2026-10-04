@@ -6,6 +6,7 @@ import com.darkblade12.itemslotmachine.plugin.Message;
 import com.darkblade12.itemslotmachine.plugin.command.CommandBase;
 import com.darkblade12.itemslotmachine.slotmachine.SlotMachine;
 import com.darkblade12.itemslotmachine.slotmachine.SlotMachineManager;
+import com.darkblade12.itemslotmachine.statistic.Category;
 import com.darkblade12.itemslotmachine.statistic.Statistic;
 import com.darkblade12.itemslotmachine.statistic.StatisticManager;
 import org.bukkit.OfflinePlayer;
@@ -14,6 +15,7 @@ import org.bukkit.command.CommandSender;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 public final class ResetCommand extends CommandBase<ItemSlotMachine> {
     public ResetCommand() {
@@ -62,11 +64,13 @@ public final class ResetCommand extends CommandBase<ItemSlotMachine> {
                 return;
         }
 
+        Map<Category, Number> previous = stat.snapshotValues();
         stat.reset();
         try {
             stat.saveFile(statManager.getDataDirectory());
         } catch (IOException e) {
-            // TODO: Rollback on failure
+            // 保存できなかったときは、メモリ上の値をリセット前に戻す
+            stat.restoreValues(previous);
             String error = e.getMessage();
             Message message;
             if (type.equals("slot")) {

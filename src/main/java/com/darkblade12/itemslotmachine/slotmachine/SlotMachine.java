@@ -87,6 +87,8 @@ public final class SlotMachine implements Nameable {
     private transient BukkitTask task;
     private transient boolean spinning;
     private transient boolean stopped;
+    // 領域判定のたびに作り直さないよう保持する(位置・向き・デザインが変わったら null に戻す)
+    private transient Cuboid region;
 
     private SlotMachine(ItemSlotMachine plugin, String name, Design design, SafeLocation buildLocation,
                         Direction buildDirection) {
@@ -563,6 +565,7 @@ public final class SlotMachine implements Nameable {
             design = slot.design;
             buildLocation = slot.buildLocation;
             buildDirection = slot.buildDirection;
+            region = null;
             moneyPot = slot.moneyPot;
             itemPot = slot.itemPot;
             settings = slot.settings;
@@ -607,6 +610,7 @@ public final class SlotMachine implements Nameable {
             design.dismantle(oldLocation, buildDirection);
             design.build(newLocation, buildDirection, settings);
             buildLocation = SafeLocation.fromBukkitLocation(newLocation);
+            region = null;
             saveAndUpdate();
         } catch (DesignBuildException | IOException e) {
             // 空き不足のときは移動先に何も置いていないので、移動先にあるほかのブロックや額縁を消さないよう解体しない
@@ -614,6 +618,7 @@ public final class SlotMachine implements Nameable {
                 design.dismantle(newLocation, buildDirection);
             }
             buildLocation = SafeLocation.fromBukkitLocation(oldLocation);
+            region = null;
 
             try {
                 design.build(oldLocation, buildDirection, settings);
@@ -738,8 +743,18 @@ public final class SlotMachine implements Nameable {
     }
 
     public boolean isInsideRegion(Location location) {
-        Cuboid region = design.getRegion().toCuboid(getLocation(), buildDirection);
-        return region.isInside(location);
+        Cuboid cached = region;
+        if (cached == null) {
+            cached = design.getRegion().toCuboid(getLocation(), buildDirection);
+            region = cached;
+        }
+
+        return cached.isInside(location);
+    }
+
+    // ポットを表示する看板の位置かどうか(台の範囲内にあるほかの看板は含まない)
+    public boolean isPotSign(Location location) {
+        return design.getSign().toBukkitLocation(getLocation(), buildDirection).equals(location);
     }
 
     public boolean isInteraction(Location location) {
