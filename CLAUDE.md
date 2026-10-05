@@ -61,7 +61,7 @@
 ### データの保存
 - プラグインフォルダ以外には何も書き込まない
 - スロットマシン・デザイン・統計・コインショップの保存形式を変えるときは、既存データの読み込み(移行)を必ず考える。サーバー上に既存のデータがある前提
-- お金の共有ポットは `money-pots/<グループ名>.json`（`{"money": 数値}`）。グループ名は `[A-Za-z0-9_-]{1,32}`。ファイルが無いときは、同じグループで一番高い機械の金額で作る。ファイルがあるときはそれを正本にし、各機械の json に残っている金額は使わない。壊れたファイルは上書きしない（そのグループは機械ごとのポットのまま）
+- 共有ジャックポットは `money-pots/<グループ名>.json`（`{"money": 数値}`）。グループ名は `[A-Za-z0-9_-]{1,32}`。ファイルが無いときは、同じグループで一番高い機械の金額で作る。ファイルがあるときはそれを正本にし、各機械の json に残っている金額は使わない。壊れたファイルは上書きしない（そのグループは機械ごとのポットのまま）
 - スロットマシン設定に `triple-pays-pot`、`anticipate`、`symbol-types` の重み、`money-pot.group` が無い既存ファイルは、これまでと同じ動き（三つ揃いはポット全取り、絵柄は等確率、焦らしなし、ポットは機械ごと）
 - アイテム(ポットの中身など)は `util/ItemStackAdapter` で JSON にする。ポーションの種類・追加効果・旗の模様は名前空間付きのキー(`minecraft:swiftness` など)で書き、フォーク元の古い形式(`basePotionData`、列挙名)も読めるようにしてある
 - アイテムの名前・説明文・本のページは Component 版 API で扱い、文字列との変換は必ず `MessageUtils.toItemComponent`/`fromItemComponent` を使う(斜体を外す。旧 String 版 API と見た目をそろえるため)。看板は `toSignComponent`/`fromSignComponent`(Paper の看板の String 版 API と同じ変換)。作り方が変わるとアイテムが `isSimilar` で一致しなくなる(2.0.2 で名前の内部構造が変わり、2.0.1 以前のコインは `CoinManager.isCoin` で名前・説明文の文字列を比べて判定している。杖はもらい直しが必要)
@@ -82,7 +82,7 @@
 - `Settings.java` / `Setting.java` / `Permission.java` — 全体設定と権限ノード
 - `plugin/` — プラグインの基盤(`PluginBase`、`Manager`、メッセージ、コマンド基盤、設定基盤、`hook/VaultHook`)
 - `command/` — `/slot`(`/sm`)、`/design`(`/sd`)、`/coin`(`/sc`)、`/statistic`(`/stat`)の各サブコマンド
-- `slotmachine/` — スロットマシン本体、個別設定、当たりの組み合わせ(`combo/`)、共有お金ポット(`MoneyPotGroup`)
+- `slotmachine/` — スロットマシン本体、個別設定、当たりの組み合わせ(`combo/`)、共有ジャックポット(`MoneyPotGroup`)
 - `design/` — デザイン(スロットマシンの形)の作成・管理
 - `coin/` — コインとコインショップ
 - `statistic/` — スロットマシン・プレイヤーの統計
