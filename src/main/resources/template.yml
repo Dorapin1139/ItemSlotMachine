@@ -4,6 +4,7 @@ coin-amount: 1
 
 # The list of materials which can appear in the reels (item frames)
 # There have to be at least 2 symbols in this list
+# Optional weight: apple-40. If every weight is equal, or weights are omitted, every symbol stays equally likely
 symbol-types: ['apple', 'melon_slice', 'carrot', 'sweet_berries', 'golden_apple']
 
 # Determines whether players are able to use this slot machine while in creative mode
@@ -26,9 +27,21 @@ reel-stop: 20
 # The amount of spins each reel will do after the spin has been stopped
 reel-delay: [0, 5, 10]
 
+# When true, and the decided result has the same symbol on the first two reels,
+# the last reel spins anticipate-spins extra times and the spin sound pitch is raised
+# This does not change the odds. The result is still chosen when the spin starts
+anticipate: false
+
+# Extra spins for the last reel while anticipate is true. 0 to 40. 8 if this line is omitted
+anticipate-spins: 8
+
 # The winning chance of a spin in percent
 # If this is commented out or set to 0, the winning chance will be completely random
 winning-chance: 2.5
+
+# When true, any three matching symbols pay out both pots
+# Set to false to pay only the combos below, so each pattern can give different items and money
+triple-pays-pot: true
 
 # The time in seconds this slot machine will be locked to the user after the slot machine is deactivated
 # The lock will prevent other players from using the slot machine after it stopped spinning completely
@@ -70,6 +83,10 @@ money-pot:
   # If this is commented out or set to 0, the house cut will be disabled
   house-cut: 10.0
 
+  # Machines with the same group name share this money pot. Item pots stay on each machine
+  # Use letters, digits, underscore, or hyphen, up to 32 characters. Omit this to keep a private pot
+  #group: casino
+
 # This section contains settings for the item pot
 # Please note that at least one of the pots (money or item) has to be enabled
 item-pot:
@@ -101,9 +118,12 @@ combos:
     pattern: ['golden_apple', 'golden_apple', 'golden_apple']
 
     # The list of actions that will be executed by this combo
-    # Money pot actions: MULTIPLY_MONEY_POT:<amount>, RAISE_MONEY_POT:<amount>, PAY_OUT_MONEY_POT
+    # Money pot actions: MULTIPLY_MONEY_POT:<amount>, RAISE_MONEY_POT:<amount>, PAY_OUT_MONEY_POT, PAY_OUT_MONEY_POT_FRACTION:<fraction>
+    # PAY_OUT_MONEY_POT_FRACTION pays that share (0 to 1) and leaves the rest in the pot. 1 empties it to 0 and does not restore the default
     # Item pot actions: MULTIPLY_ITEM_POT:<amount>, RAISE_ITEM_POT:<amount>, PAY_OUT_ITEM_POT
     # Independent actions: PAY_OUT_MONEY:<amount>, PAY_OUT_ITEMS:<items>, EXECUTE_COMMAND:<command>
+    # A combo can also set "money: <amount>" and "items: ['apple-8']" instead of, or in addition to, actions
+    # Those give that money and those items without taking them out of the pots
     # Command placeholders: <user_name>, <money>, <currency_name>, <item_amount>, <items>, <slot_machine>
     # The item name 'coin' can be used for a coin item
     # Please note that the money or item pot actions will only work if that pot is enabled

@@ -78,6 +78,30 @@ public final class SoundInfo {
         player.playSound(location, sound, volume, pitch);
     }
 
+    public void play(Location location, float pitchScale) {
+        World world = location.getWorld();
+        if (world == null) {
+            throw new IllegalArgumentException("World of location cannot be null.");
+        }
+
+        world.playSound(location, sound, volume, scaledPitch(pitchScale));
+    }
+
+    public void play(Player player, Location location, float pitchScale) {
+        player.playSound(location, sound, volume, scaledPitch(pitchScale));
+    }
+
+    private float scaledPitch(float pitchScale) {
+        float scaled = pitch * pitchScale;
+        if (scaled < 0.5f) {
+            return 0.5f;
+        }
+        if (scaled > 2.0f) {
+            return 2.0f;
+        }
+        return scaled;
+    }
+
     public boolean isBroadcast() {
         return broadcast;
     }

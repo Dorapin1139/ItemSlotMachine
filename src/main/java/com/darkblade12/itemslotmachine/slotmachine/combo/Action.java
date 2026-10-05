@@ -22,6 +22,17 @@ public class Action {
         }
 
         switch (type) {
+            case PAY_OUT_MONEY_POT_FRACTION:
+                double fraction;
+                try {
+                    fraction = Double.parseDouble(text.substring(separatorIndex + 1));
+                } catch (NumberFormatException ex) {
+                    throw new IllegalArgumentException("Invalid amount.");
+                }
+                if (fraction <= 0 || fraction > 1) {
+                    throw new IllegalArgumentException("Fraction must be higher than 0 and at most 1.");
+                }
+                return new AmountAction(type, fraction);
             case MULTIPLY_MONEY_POT:
             case MULTIPLY_ITEM_POT:
             case RAISE_MONEY_POT:

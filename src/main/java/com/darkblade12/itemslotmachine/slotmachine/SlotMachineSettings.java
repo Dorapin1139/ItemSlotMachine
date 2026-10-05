@@ -5,7 +5,10 @@ import com.darkblade12.itemslotmachine.coin.CoinManager;
 import com.darkblade12.itemslotmachine.plugin.settings.InvalidValueException;
 import com.darkblade12.itemslotmachine.plugin.settings.SettingsBase;
 import com.darkblade12.itemslotmachine.slotmachine.combo.Action;
+import com.darkblade12.itemslotmachine.slotmachine.combo.ActionType;
+import com.darkblade12.itemslotmachine.slotmachine.combo.AmountAction;
 import com.darkblade12.itemslotmachine.slotmachine.combo.Combo;
+import com.darkblade12.itemslotmachine.slotmachine.combo.ItemAction;
 import com.darkblade12.itemslotmachine.util.ItemUtils;
 import com.google.common.primitives.Ints;
 import com.google.gson.JsonParseException;
@@ -17,11 +20,16 @@ import org.bukkit.inventory.ItemStack;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 public class SlotMachineSettings extends SettingsBase<ItemSlotMachine> {
+    private static final Pattern MONEY_POT_GROUP_NAME = Pattern.compile("[A-Za-z0-9_-]{1,32}");
+    private static final int MAX_SYMBOL_WEIGHT = 10000;
     private final File file;
     int coinAmount;
     Material[] symbolTypes;
@@ -30,7 +38,13 @@ public class SlotMachineSettings extends SettingsBase<ItemSlotMachine> {
     boolean launchFireworks;
     int reelStop;
     int[] reelDelay;
+    boolean anticipate;
+    int anticipateSpins;
     double winningChance;
+    boolean triplePaysPot;
+    boolean symbolWeightsActive;
+    int[] symbolWeights;
+    int symbolWeightTotal;
     int lockTime;
     String[] winCommands;
     SoundInfo[] spinSounds;
@@ -40,6 +54,7 @@ public class SlotMachineSettings extends SettingsBase<ItemSlotMachine> {
     double moneyPotDefault;
     double moneyPotRaise;
     double moneyPotHouseCut;
+    String moneyPotGroup;
     boolean itemPotEnabled;
     ItemStack[] itemPotDefault;
     ItemStack[] itemPotRaise;
@@ -64,7 +79,7 @@ public class SlotMachineSettings extends SettingsBase<ItemSlotMachine> {
             throw new InvalidValueException("The value of setting {0} cannot be lower than 0.", Setting.COIN_AMOUNT);
         }
 
-        symbolTypes = convertMaterials(Setting.SYMBOL_TYPES.getPath(), 2, 0, false);
+        loadSymbols();
         allowCreative = config.getBoolean(Setting.ALLOW_CREATIVE.getPath(), true);
         launchFireworks = config.getBoolean(Setting.LAUNCH_FIREWORKS.getPath(), true);
         individualPermission = config.getBoolean(Setting.INDIVIDUAL_PERMISSION.getPath());
@@ -76,10 +91,19 @@ public class SlotMachineSettings extends SettingsBase<ItemSlotMachine> {
         }
         reelDelay = Ints.toArray(reelDelayList);
 
+        anticipate = config.getBoolean(Setting.ANTICIPATE.getPath());
+        String anticipatePath = Setting.ANTICIPATE_SPINS.getPath();
+        anticipateSpins = config.contains(anticipatePath) ? config.getInt(anticipatePath) : 8;
+        if (anticipateSpins < 0 || anticipateSpins > 40) {
+            throw new InvalidValueException("The value of setting {0} must be between 0 and 40.", anticipatePath);
+        }
+
         winningChance = config.getDouble(Setting.WINNING_CHANCE.getPath());
         if (winningChance > 100) {
             throw new InvalidValueException("The value of setting {0} cannot be higher than 100.", Setting.WINNING_CHANCE);
         }
+        String triplePath = Setting.TRIPLE_PAYS_POT.getPath();
+        triplePaysPot = config.contains(triplePath) ? config.getBoolean(triplePath) : true;
         lockTime = config.getInt(Setting.LOCK_TIME.getPath());
         List<String> winCommandsList = config.getStringList(Setting.WIN_COMMANDS.getPath());
         winCommands = new String[winCommandsList.size()];
@@ -113,6 +137,14 @@ public class SlotMachineSettings extends SettingsBase<ItemSlotMachine> {
             }
 
             moneyPotHouseCut = config.getDouble(Setting.MONEY_POT_HOUSE_CUT.getPath());
+            String groupPath = Setting.MONEY_POT_GROUP.getPath();
+            String rawGroup = config.getString(groupPath);
+            if (rawGroup != null && !rawGroup.isBlank()) {
+                if (!MONEY_POT_GROUP_NAME.matcher(rawGroup).matches()) {
+                    throw new InvalidValueException("The value of setting {0} contains the invalid group name {1}.", groupPath, rawGroup);
+                }
+                moneyPotGroup = rawGroup;
+            }
             if (moneyPotHouseCut == 100) {
                 throw new InvalidValueException("The percentage value of setting {0} cannot be equal to 100.", Setting.MONEY_POT_HOUSE_CUT);
             } else if (moneyPotHouseCut > 100) {
@@ -142,25 +174,135 @@ public class SlotMachineSettings extends SettingsBase<ItemSlotMachine> {
             for (String name : comboNames) {
                 String basePath = String.format("%s.%s.", comboSection.getCurrentPath(), name);
                 Material[] pattern = convertMaterials(basePath + "pattern", 3, 3, true);
+                List<Action> parsedActions = new ArrayList<>();
+                String moneyPath = basePath + "money";
+                if (config.contains(moneyPath)) {
+                    double money = config.getDouble(moneyPath);
+                    if (money <= 0) {
+                        throw new InvalidValueException("The value of setting {0} must be higher than 0.", moneyPath);
+                    }
+                    parsedActions.add(new AmountAction(ActionType.PAY_OUT_MONEY, money));
+                }
+                String itemsPath = basePath + "items";
+                if (config.contains(itemsPath)) {
+                    List<String> itemNames = config.getStringList(itemsPath);
+                    if (itemNames.isEmpty()) {
+                        throw new InvalidValueException("The list size of setting {0} cannot be lower than {1}.", itemsPath, 1);
+                    }
+                    List<ItemStack> prizeItems = new ArrayList<>(itemNames.size());
+                    for (int i = 0; i < itemNames.size(); i++) {
+                        String item = itemNames.get(i);
+                        try {
+                            prizeItems.add(ItemUtils.fromString(item, customItems));
+                        } catch (IllegalArgumentException ex) {
+                            throw new InvalidValueException("A list value of setting {0} contains the invalid item {1}.", itemsPath, item);
+                        } catch (JsonParseException ex) {
+                            throw new InvalidValueException("The list value of setting {0} at index {1} could not be parsed.", itemsPath, i + 1);
+                        }
+                    }
+                    parsedActions.add(new ItemAction(ActionType.PAY_OUT_ITEMS, prizeItems));
+                }
                 String actionPath = basePath + "actions";
                 List<String> actionList = config.getStringList(actionPath);
-                if (actionList.size() == 0) {
-                    throw new InvalidValueException("The list size of setting {0} cannot be lower than {1}.", actionPath, 1);
-                }
-                Action[] actions = new Action[actionList.size()];
-                for (int i = 0; i < actions.length; i++) {
-                    String action = actionList.get(i);
+                for (String action : actionList) {
                     try {
-                        actions[i] = Action.fromString(action, customItems);
+                        parsedActions.add(Action.fromString(action, customItems));
                     } catch (IllegalArgumentException ex) {
                         throw new InvalidValueException("A list value of setting {0} contains the invalid action {1}.", actionPath, action);
                     }
                 }
+                if (parsedActions.isEmpty()) {
+                    throw new InvalidValueException("The list size of setting {0} cannot be lower than {1}.", actionPath, 1);
+                }
 
-                combos[index++] = new Combo(pattern, actions);
+                combos[index++] = new Combo(pattern, parsedActions.toArray(new Action[0]));
             }
         } else {
             combos = new Combo[0];
+        }
+    }
+
+    private void loadSymbols() throws InvalidValueException {
+        String path = Setting.SYMBOL_TYPES.getPath();
+        List<String> materialList = config.getStringList(path);
+        int size = materialList.size();
+        if (size < 2) {
+            throw new InvalidValueException("The list size of setting {0} cannot be lower than {1}.", path, 2);
+        }
+
+        Material[] materials = new Material[size];
+        int[] weights = new int[size];
+        Set<Material> seen = new HashSet<>();
+        int total = 0;
+        int firstWeight = -1;
+        boolean weighted = false;
+        for (int i = 0; i < size; i++) {
+            ParsedSymbol parsed = parseSymbol(path, materialList.get(i));
+            if (!seen.add(parsed.material)) {
+                throw new InvalidValueException("A list value of setting {0} contains the duplicate material {1}.", path,
+                                                parsed.material.name());
+            }
+            materials[i] = parsed.material;
+            weights[i] = parsed.weight;
+            total += parsed.weight;
+            if (firstWeight == -1) {
+                firstWeight = parsed.weight;
+            } else if (parsed.weight != firstWeight) {
+                weighted = true;
+            }
+        }
+
+        symbolTypes = materials;
+        symbolWeights = weights;
+        symbolWeightTotal = total;
+        symbolWeightsActive = weighted;
+    }
+
+    private ParsedSymbol parseSymbol(String path, String raw) throws InvalidValueException {
+        int dash = raw.lastIndexOf('-');
+        if (dash > 0 && dash < raw.length() - 1 && isDigits(raw.substring(dash + 1))) {
+            int weight;
+            try {
+                weight = Integer.parseInt(raw.substring(dash + 1));
+            } catch (NumberFormatException ex) {
+                throw new InvalidValueException("A list value of setting {0} contains the invalid material {1}.", path, raw);
+            }
+            if (weight < 1 || weight > MAX_SYMBOL_WEIGHT) {
+                throw new InvalidValueException("A list value of setting {0} contains the invalid weight {1}.", path, raw);
+            }
+            Material material = Material.matchMaterial(raw.substring(0, dash));
+            if (material == null || material == Material.AIR) {
+                throw new InvalidValueException("A list value of setting {0} contains the invalid material {1}.", path, raw);
+            }
+            return new ParsedSymbol(material, weight);
+        }
+
+        Material material = Material.matchMaterial(raw);
+        if (material == null || material == Material.AIR) {
+            throw new InvalidValueException("A list value of setting {0} contains the invalid material {1}.", path, raw);
+        }
+        return new ParsedSymbol(material, 1);
+    }
+
+    private static boolean isDigits(String text) {
+        if (text.isEmpty()) {
+            return false;
+        }
+        for (int i = 0; i < text.length(); i++) {
+            if (!Character.isDigit(text.charAt(i))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static final class ParsedSymbol {
+        private final Material material;
+        private final int weight;
+
+        private ParsedSymbol(Material material, int weight) {
+            this.material = material;
+            this.weight = weight;
         }
     }
 
@@ -301,6 +443,10 @@ public class SlotMachineSettings extends SettingsBase<ItemSlotMachine> {
 
     public double getMoneyPotHouseCut() {
         return moneyPotHouseCut;
+    }
+
+    public String getMoneyPotGroup() {
+        return moneyPotGroup;
     }
 
     public boolean isItemPotEnabled() {

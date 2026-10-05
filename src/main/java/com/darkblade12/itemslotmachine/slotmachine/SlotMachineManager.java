@@ -37,16 +37,20 @@ import org.bukkit.inventory.ItemStack;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public final class SlotMachineManager extends Manager<ItemSlotMachine> {
     private final List<SlotMachine> slots;
+    private final Map<String, MoneyPotGroup> moneyGroups;
     private NameableComparator<SlotMachine> comparator;
 
     public SlotMachineManager(ItemSlotMachine plugin) {
         super(plugin, new File(plugin.getDataFolder(), "slot machines"));
         slots = new ArrayList<>();
+        moneyGroups = new HashMap<>();
     }
 
     @Override
@@ -64,6 +68,7 @@ public final class SlotMachineManager extends Manager<ItemSlotMachine> {
 
     public void loadSlotMachines() {
         slots.clear();
+        moneyGroups.clear();
 
         for (File file : FileUtils.getFiles(dataDirectory, SlotMachine.FILE_EXTENSION)) {
             try {
@@ -75,10 +80,84 @@ public final class SlotMachineManager extends Manager<ItemSlotMachine> {
 
         int count = slots.size();
         plugin.logInfo(count + " slot machine" + (count == 1 ? "" : "s") + " loaded.");
+        bindMoneyGroups();
     }
 
     public void register(SlotMachine slot) {
         slots.add(slot);
+        bindMoneyGroup(slot);
+    }
+
+    public void bindMoneyGroup(SlotMachine slot) {
+        String groupName = slot.getSettings().getMoneyPotGroup();
+        if (groupName == null) {
+            slot.attachMoneyGroup(null);
+            return;
+        }
+
+        MoneyPotGroup group = moneyGroups.get(groupName);
+        if (group == null) {
+            group = MoneyPotGroup.open(plugin, moneyPotFile(groupName), groupName, slot.getStoredMoneyPot(), slot.getName());
+            if (group != null) {
+                moneyGroups.put(groupName, group);
+            }
+        }
+        if (group == null) {
+            slot.attachMoneyGroup(null);
+            return;
+        }
+        slot.attachMoneyGroup(group);
+    }
+
+    public void syncGroupMoney(String groupName, double money, SlotMachine source) {
+        for (SlotMachine slot : slots) {
+            if (slot == source || !groupName.equals(slot.getSettings().getMoneyPotGroup())) {
+                continue;
+            }
+            slot.mirrorMoney(money);
+        }
+    }
+
+    private void bindMoneyGroups() {
+        Map<String, List<SlotMachine>> grouped = new HashMap<>();
+        for (SlotMachine slot : slots) {
+            String groupName = slot.getSettings().getMoneyPotGroup();
+            if (groupName == null) {
+                slot.attachMoneyGroup(null);
+                continue;
+            }
+            grouped.computeIfAbsent(groupName, key -> new ArrayList<>()).add(slot);
+        }
+
+        for (Map.Entry<String, List<SlotMachine>> entry : grouped.entrySet()) {
+            String groupName = entry.getKey();
+            List<SlotMachine> members = entry.getValue();
+            double seed = members.get(0).getStoredMoneyPot();
+            String source = members.get(0).getName();
+            for (int i = 1; i < members.size(); i++) {
+                SlotMachine member = members.get(i);
+                if (member.getStoredMoneyPot() > seed) {
+                    seed = member.getStoredMoneyPot();
+                    source = member.getName();
+                }
+            }
+
+            MoneyPotGroup group = MoneyPotGroup.open(plugin, moneyPotFile(groupName), groupName, seed, source);
+            if (group == null) {
+                for (SlotMachine member : members) {
+                    member.attachMoneyGroup(null);
+                }
+                continue;
+            }
+            moneyGroups.put(groupName, group);
+            for (SlotMachine member : members) {
+                member.attachMoneyGroup(group);
+            }
+        }
+    }
+
+    private File moneyPotFile(String groupName) {
+        return new File(plugin.getDataFolder(), "money-pots" + File.separator + groupName + ".json");
     }
 
     public void unregister(SlotMachine slot) throws IOException {

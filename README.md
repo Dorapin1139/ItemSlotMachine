@@ -96,6 +96,7 @@ IntelliJ IDEA 上で正しくプラグイン（JARファイル）を生成する
 | `config.yml` | プラグイン全体の設定 |
 | `template.yml` | スロットマシンを新しく設置するときに使う設定の雛形 |
 | `slot machines/<名前>.yml` | スロットマシンごとの設定(`template.yml` の写し) |
+| `money-pots/<グループ名>.json` | 共有しているお金のポット。`money-pot.group` を付けた機械だけ使う |
 | `designs/<名前>.json` | 作成したデザイン。標準のデザイン `default` はプラグインに内蔵 |
 | `statistics/slot machine/`、`statistics/player/` | スロットマシンとプレイヤーの統計 |
 | `messages_<言語タグ>.json` | メッセージ。`&` で色を付けられます |
@@ -122,13 +123,16 @@ IntelliJ IDEA 上で正しくプラグイン（JARファイル）を生成する
 | 項目 | 既定値 | 説明 |
 |---|---|---|
 | `coin-amount` | `1` | 1 回のスピンに必要なコインの枚数(1 以上) |
-| `symbol-types` | `['apple', 'melon_slice', ...]` | リール(額縁)に出る絵柄のアイテム。2 種類以上 |
+| `symbol-types` | `['apple', 'melon_slice', ...]` | リール(額縁)に出る絵柄。2 種類以上。`apple-40` のように重みを付けられる。重みが全部同じ、または省略したときは、これまでどおり等確率 |
 | `allow-creative` | `true` | クリエイティブモードでも遊べるか。遊べる場合、コインは不要です |
 | `launch-fireworks` | `true` | 当たったときに花火を打ち上げるか |
 | `individual-permission` | `false` | `true` にすると、遊ぶのに `itemslotmachine.slot.use.<名前>` が必要になります(`false` なら `itemslotmachine.slot.use`) |
 | `reel-stop` | `20` | リールが自動で止まるまでの回転数。0 にすると、プレイヤーがリールを左クリックして止めます |
 | `reel-delay` | `[0, 5, 10]` | 止めたあと、各リールが余分に回る回数 |
+| `anticipate` | `false` | `true` のとき、決まった出目の左二つが同じ絵柄なら、最後のリールだけ余分に回す。確率は変わらない |
+| `anticipate-spins` | `8` | 上の余分な回転数。0〜40。省略時は 8 |
 | `winning-chance` | `2.5` | 当選確率(%)。0 にすると完全にランダム |
+| `triple-pays-pot` | `true` | `true` だと、三つ揃いはお金とアイテムのポットを両方渡す(これまでの動き)。`false` にすると、下のコンボに書いたものだけを渡す |
 | `lock-time` | (無効) | 止まったあと、遊んだ人以外が使えない秒数。0 またはコメントアウトで無効 |
 | `win-commands` | `'say ...'` | 当たったときにコンソールから実行するコマンド。`<user>`、`<money>`、`<currency>`、`<item_amount>`、`<items>`、`<slot_machine>` が使えます |
 | `sounds.spin` / `win` / `lose` | | 回転中・当たり・はずれの効果音。書式は `<効果音名>-<音量>-<ピッチ>[-<true/false>]`。最後を `false` にすると遊んでいる人にだけ聞こえます(省略時は周りの人にも聞こえます) |
@@ -136,20 +140,46 @@ IntelliJ IDEA 上で正しくプラグイン（JARファイル）を生成する
 | `money-pot.default` | `1000.0` | ポットの初期額(当たって空になったあともこの額に戻ります) |
 | `money-pot.raise` | `50.0` | 1 回のスピンでポットに足される額 |
 | `money-pot.house-cut` | `10.0` | 払い出すときに胴元が取る割合(%)。0 またはコメントアウトで無効 |
+| `money-pot.group` | (なし) | 同じ名前の機械で、お金のポットを一つにする。アイテムのポットは機械ごとのまま。英数字、`_`、`-` だけで 32 文字まで。省略すると、その機械だけのポット |
 | `item-pot.enabled` | `true` | アイテムのポットを使うか |
 | `item-pot.default` | `['feather-5', ...]` | ポットの初期の中身。書式は `<アイテム名>[-<個数>]`。`coin` と書くとコインになります |
 | `item-pot.raise` | `['glowstone_dust-2', ...]` | 1 回のスピンでポットに足されるアイテム |
 | `combos.<名前>.pattern` | | 当たりになる絵柄の並び(3 つ)。`*` はどの絵柄にも一致します |
-| `combos.<名前>.actions` | | 当たったときの動作。下の表を参照 |
+| `combos.<名前>.money` | | この並びのときに渡す定額。ポットからは引かない。お金ポットの `house-cut` は、この定額と割合払いにも掛かる |
+| `combos.<名前>.items` | | この並びのときに渡すアイテム。書式は `<アイテム名>[-<個数>]`。ポットからは引かない |
+| `combos.<名前>.actions` | | 当たったときの動作。`money` と `items` のあとに実行する。どれか一つは必要 |
 
 当たりの動作(`actions`)には次のものがあります。
 
 | 動作 | 内容 |
 |---|---|
 | `MULTIPLY_MONEY_POT:<倍率>` / `RAISE_MONEY_POT:<額>` / `PAY_OUT_MONEY_POT` | お金のポットを倍にする / 増やす / 払い出す |
+| `PAY_OUT_MONEY_POT_FRACTION:<割合>` | お金のポットのその割合だけ渡して、残りはポットに残す。`0` より大きく `1` 以下。`1` は 0 にするだけで、初期額には戻さない |
 | `MULTIPLY_ITEM_POT:<倍率>` / `RAISE_ITEM_POT:<アイテム>` / `PAY_OUT_ITEM_POT` | アイテムのポットを倍にする / 増やす / 払い出す |
 | `PAY_OUT_MONEY:<額>` / `PAY_OUT_ITEMS:<アイテム>` | ポットとは別にお金 / アイテムを渡す |
 | `EXECUTE_COMMAND:<コマンド>` | コンソールからコマンドを実行する。`<user_name>`、`<money>`、`<currency_name>`、`<item_amount>`、`<items>`、`<slot_machine>` が使えます |
+
+絵柄ごとに渡すアイテムを変えるときは、`triple-pays-pot` を `false` にします。`true` のままだと、三つ揃いは `items` で渡したアイテムに加えて、ポットも空にします。
+
+```yaml
+triple-pays-pot: false
+symbol-types: ['apple-40', 'melon_slice-25', 'golden_apple-2']
+anticipate: true
+combos:
+  apple:
+    pattern: ['apple', 'apple', 'apple']
+    items: ['apple-8', 'cookie-4']
+    money: 200
+  jackpot:
+    pattern: ['golden_apple', 'golden_apple', 'golden_apple']
+    actions:
+      - 'PAY_OUT_MONEY_POT'
+      - 'PAY_OUT_ITEM_POT'
+```
+
+`winning-chance` が当たるかどうかは、これまでどおり先に決めます。重みは、その当たりがどの絵柄になるかに使います。重みを書かない既存の機械の抽選は変わりません。
+
+共有ポットは、最初にファイルが無いとき、同じグループの機械のうち一番高い金額で `money-pots/<名前>.json` を作ります。ファイルがあるときは、そちらが金額の正本です。各機械の json に残っている金額は使いません。胴元の割合、初期額、1 回で増える額は、当たった機械、または回した機械の設定を使います。`/slot money` は、その機械が属する共有ポットを操作します。
 
 ## コマンド
 
