@@ -53,7 +53,7 @@ triple-pays-pot: false
 
 # The commands that will always be executed by the console if a player wins
 # Placeholders: <user>, <money>, <currency>, <item_amount>, <items>, <slot_machine>
-# Small wins stay quiet. The golden apple combo announces the jackpot
+# Empty. The player who spun gets the usual win message. No server-wide announcement
 win-commands: []
 
 # This section contains settings for the different sounds of this slot machine
@@ -154,4 +154,3 @@ combos:
       - '{"type":"PAPER","amount":3,"meta":{"displayName":"§d§linfernalカプセルトイ券","lore":["§7infernalカプセルトイで使えます。","§7ランダムなinfernalmobsのアイテムと交換できます。","§7一部出ないアイテムもあります。"]}}'
     actions:
       - 'PAY_OUT_MONEY_POT'
-      - 'EXECUTE_COMMAND:say <user> が <slot_machine> のジャックポットを取りました（<money> <currency>、infernalカプセルトイ券 3 枚）'
