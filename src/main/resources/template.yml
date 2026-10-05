@@ -5,7 +5,9 @@ coin-amount: 1
 # The list of materials which can appear in the reels (item frames)
 # There have to be at least 2 symbols in this list
 # Optional weight: apple-40. If every weight is equal, or weights are omitted, every symbol stays equally likely
-symbol-types: ['apple', 'melon_slice', 'carrot', 'sweet_berries', 'golden_apple']
+# Weights are not the triple chance. A triple's share of wins is weight × weight × weight
+# apple 10^3=1000, melon 512, carrot 343, berries 216, golden apple 64 (2135 total)
+symbol-types: ['apple-10', 'melon_slice-8', 'carrot-7', 'sweet_berries-6', 'golden_apple-4']
 
 # Determines whether players are able to use this slot machine while in creative mode
 # Players will be able to use this slot machine in creative mode without having to insert coins if set to 'true'
@@ -30,18 +32,19 @@ reel-delay: [0, 5, 10]
 # When true, and the decided result has the same symbol on the first two reels,
 # the last reel spins anticipate-spins extra times and the spin sound pitch is raised
 # This does not change the odds. The result is still chosen when the spin starts
-anticipate: false
+anticipate: true
 
 # Extra spins for the last reel while anticipate is true. 0 to 40. 8 if this line is omitted
 anticipate-spins: 8
 
 # The winning chance of a spin in percent
 # If this is commented out or set to 0, the winning chance will be completely random
-winning-chance: 2.5
+# 8% of spins are some three-of-a-kind. Which one follows the weights above
+winning-chance: 8
 
 # When true, any three matching symbols pay out both pots
 # Set to false to pay only the combos below, so each pattern can give different items and money
-triple-pays-pot: true
+triple-pays-pot: false
 
 # The time in seconds this slot machine will be locked to the user after the slot machine is deactivated
 # The lock will prevent other players from using the slot machine after it stopped spinning completely
@@ -50,7 +53,8 @@ triple-pays-pot: true
 
 # The commands that will always be executed by the console if a player wins
 # Placeholders: <user>, <money>, <currency>, <item_amount>, <items>, <slot_machine>
-win-commands: 'say <user> has won <money> <currency> and <item_amount> items from slot machine <slot_machine>'
+# Small wins stay quiet. The golden apple combo announces the jackpot
+win-commands: []
 
 # This section contains settings for the different sounds of this slot machine
 # Sound format: <sound_name>-<volume>-<pitch>[-<broadcast>]
@@ -97,38 +101,55 @@ item-pot:
   # The default content of the item pot, which will be set after a player has won the pot
   # Item format: <item_name>[-<amount>]
   # The item name 'coin' can be used for a coin item
-  default: ['feather-5', 'diamond-1', 'iron_ingot-1']
+  default: ['diamond-1', 'emerald-2', 'gold_ingot-4']
 
   # The items which are added to the pot by every spin
   # Item format: <item_name>[-<amount>]
   # The item name 'coin' can be used for a coin item
-  raise: ['glowstone_dust-2', 'lapis_lazuli-2']
+  # One gold nugget per spin. About 420 spins is 46 gold ingots, plus the 4 ingots in the default pot
+  raise: ['gold_nugget-1']
 
 # The list of active item pot combos
 # Each combo has its own section with an unique name
 # Combos are activated by a specific pattern of symbols in the reels (item frames) after the spin has stopped completely
 combos:
 
-  # The default example combo
-  # If you want to disable this combo, you can comment out this section and its sub-sections
-  example:
+  # money is before house-cut. At 10%, the player receives 90%
+  # items are given directly and are not taken from the item pot
+  apple:
+    pattern: ['apple', 'apple', 'apple']
+    money: 100
+    items: ['apple-8', 'cookie-4']
 
-    # The symbol pattern which activates this combo
-    # '*' can be used as a wildcard and will match every symbol
+  melon:
+    pattern: ['melon_slice', 'melon_slice', 'melon_slice']
+    money: 250
+    items: ['melon_slice-16', 'glistering_melon_slice-1']
+
+  carrot:
+    pattern: ['carrot', 'carrot', 'carrot']
+    money: 600
+    items: ['golden_carrot-8', 'emerald-1']
+
+  berries:
+    pattern: ['sweet_berries', 'sweet_berries', 'sweet_berries']
+    money: 1500
+    items: ['sweet_berries-16', 'glow_berries-8', 'gold_ingot-2']
+
+  # The list of actions that will be executed by this combo
+  # Money pot actions: MULTIPLY_MONEY_POT:<amount>, RAISE_MONEY_POT:<amount>, PAY_OUT_MONEY_POT, PAY_OUT_MONEY_POT_FRACTION:<fraction>
+  # PAY_OUT_MONEY_POT_FRACTION pays that share (0 to 1) and leaves the rest in the pot. 1 empties it to 0 and does not restore the default
+  # Item pot actions: MULTIPLY_ITEM_POT:<amount>, RAISE_ITEM_POT:<amount>, PAY_OUT_ITEM_POT
+  # Independent actions: PAY_OUT_MONEY:<amount>, PAY_OUT_ITEMS:<items>, EXECUTE_COMMAND:<command>
+  # A combo can also set "money: <amount>" and "items: ['apple-8']" instead of, or in addition to, actions
+  # Those give that money and those items without taking them out of the pots
+  # Command placeholders: <user>, <money>, <currency>, <item_amount>, <items>, <slot_machine>
+  # The item name 'coin' can be used for a coin item
+  # Please note that the money or item pot actions will only work if that pot is enabled
+  jackpot:
     pattern: ['golden_apple', 'golden_apple', 'golden_apple']
-
-    # The list of actions that will be executed by this combo
-    # Money pot actions: MULTIPLY_MONEY_POT:<amount>, RAISE_MONEY_POT:<amount>, PAY_OUT_MONEY_POT, PAY_OUT_MONEY_POT_FRACTION:<fraction>
-    # PAY_OUT_MONEY_POT_FRACTION pays that share (0 to 1) and leaves the rest in the pot. 1 empties it to 0 and does not restore the default
-    # Item pot actions: MULTIPLY_ITEM_POT:<amount>, RAISE_ITEM_POT:<amount>, PAY_OUT_ITEM_POT
-    # Independent actions: PAY_OUT_MONEY:<amount>, PAY_OUT_ITEMS:<items>, EXECUTE_COMMAND:<command>
-    # A combo can also set "money: <amount>" and "items: ['apple-8']" instead of, or in addition to, actions
-    # Those give that money and those items without taking them out of the pots
-    # Command placeholders: <user_name>, <money>, <currency_name>, <item_amount>, <items>, <slot_machine>
-    # The item name 'coin' can be used for a coin item
-    # Please note that the money or item pot actions will only work if that pot is enabled
     actions:
-      - 'MULTIPLY_MONEY_POT:2.0'
-      - 'RAISE_ITEM_POT:diamond-3, iron_sword-1, sponge-20'
+      - 'RAISE_ITEM_POT:diamond-3'
       - 'PAY_OUT_MONEY_POT'
       - 'PAY_OUT_ITEM_POT'
+      - 'EXECUTE_COMMAND:say <user> が <slot_machine> のジャックポットを取りました（<money> <currency>、アイテム <item_amount> 種類）'
