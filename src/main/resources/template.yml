@@ -6,8 +6,8 @@ coin-amount: 1
 # There have to be at least 2 symbols in this list
 # Optional weight: apple-40. If every weight is equal, or weights are omitted, every symbol stays equally likely
 # Weights are not the triple chance. A triple's share of wins is weight × weight × weight
-# apple 10^3=1000, melon 512, carrot 343, berries 216, golden apple 64 (2135 total)
-symbol-types: ['apple-10', 'melon_slice-8', 'carrot-7', 'sweet_berries-6', 'golden_apple-4']
+# berries 10^3=1000, melon 512, carrot 343, apple 125, golden apple 64 (2044 total)
+symbol-types: ['apple-5', 'melon_slice-8', 'carrot-7', 'sweet_berries-10', 'golden_apple-4']
 
 # Determines whether players are able to use this slot machine while in creative mode
 # Players will be able to use this slot machine in creative mode without having to insert coins if set to 'true'
@@ -78,14 +78,16 @@ money-pot:
   enabled: true
 
   # The default amount of money in the pot, which will be set after a player has won the pot
-  default: 1000.0
+  # Only the golden apple combo pays this pot out
+  default: 10000.0
 
   # The amount of money by which the pot will be raised by every spin
   raise: 50.0
 
   # The percentage of money taken from the pot by the house instead of being payed out to the winner
   # If this is commented out or set to 0, the house cut will be disabled
-  house-cut: 10.0
+  # 0 so the combo money below is the amount the player receives
+  house-cut: 0.0
 
   # Machines with the same group name share this money pot. Item pots stay on each machine
   # Use letters, digits, underscore, or hyphen, up to 32 characters. Omit this to keep a private pot
@@ -96,45 +98,45 @@ money-pot:
 item-pot:
 
   # Determines whether the item pot is enabled
-  enabled: true
+  # Off in this template. Item prizes are infernal capsule toy tickets on the combos
+  enabled: false
 
   # The default content of the item pot, which will be set after a player has won the pot
   # Item format: <item_name>[-<amount>]
   # The item name 'coin' can be used for a coin item
-  default: ['diamond-1', 'emerald-2', 'gold_ingot-4']
+  default: []
 
   # The items which are added to the pot by every spin
   # Item format: <item_name>[-<amount>]
   # The item name 'coin' can be used for a coin item
-  # One gold nugget per spin. About 420 spins is 46 gold ingots, plus the 4 ingots in the default pot
-  raise: ['gold_nugget-1']
+  raise: []
 
 # The list of active item pot combos
 # Each combo has its own section with an unique name
 # Combos are activated by a specific pattern of symbols in the reels (item frames) after the spin has stopped completely
 combos:
 
-  # money is before house-cut. At 10%, the player receives 90%
-  # items are given directly and are not taken from the item pot
-  apple:
-    pattern: ['apple', 'apple', 'apple']
-    money: 100
-    items: ['apple-8', 'cookie-4']
+  # house-cut is 0, so money is the amount the player receives
+  # Ticket name and lore must match CapsuleToy stack-ticket-display-name and stack-ticket-lore1 to lore3
+  berries:
+    pattern: ['sweet_berries', 'sweet_berries', 'sweet_berries']
+    money: 200
 
   melon:
     pattern: ['melon_slice', 'melon_slice', 'melon_slice']
-    money: 250
-    items: ['melon_slice-16', 'glistering_melon_slice-1']
+    money: 800
 
   carrot:
     pattern: ['carrot', 'carrot', 'carrot']
-    money: 600
-    items: ['golden_carrot-8', 'emerald-1']
+    money: 2000
+    items:
+      - '{"type":"PAPER","amount":1,"meta":{"displayName":"§d§linfernalカプセルトイ券","lore":["§7infernalカプセルトイで使えます。","§7ランダムなinfernalmobsのアイテムと交換できます。","§7一部出ないアイテムもあります。"]}}'
 
-  berries:
-    pattern: ['sweet_berries', 'sweet_berries', 'sweet_berries']
-    money: 1500
-    items: ['sweet_berries-16', 'glow_berries-8', 'gold_ingot-2']
+  apple:
+    pattern: ['apple', 'apple', 'apple']
+    money: 5000
+    items:
+      - '{"type":"PAPER","amount":2,"meta":{"displayName":"§d§linfernalカプセルトイ券","lore":["§7infernalカプセルトイで使えます。","§7ランダムなinfernalmobsのアイテムと交換できます。","§7一部出ないアイテムもあります。"]}}'
 
   # The list of actions that will be executed by this combo
   # Money pot actions: MULTIPLY_MONEY_POT:<amount>, RAISE_MONEY_POT:<amount>, PAY_OUT_MONEY_POT, PAY_OUT_MONEY_POT_FRACTION:<fraction>
@@ -148,8 +150,8 @@ combos:
   # Please note that the money or item pot actions will only work if that pot is enabled
   jackpot:
     pattern: ['golden_apple', 'golden_apple', 'golden_apple']
+    items:
+      - '{"type":"PAPER","amount":3,"meta":{"displayName":"§d§linfernalカプセルトイ券","lore":["§7infernalカプセルトイで使えます。","§7ランダムなinfernalmobsのアイテムと交換できます。","§7一部出ないアイテムもあります。"]}}'
     actions:
-      - 'RAISE_ITEM_POT:diamond-3'
       - 'PAY_OUT_MONEY_POT'
-      - 'PAY_OUT_ITEM_POT'
-      - 'EXECUTE_COMMAND:say <user> が <slot_machine> のジャックポットを取りました（<money> <currency>、アイテム <item_amount> 種類）'
+      - 'EXECUTE_COMMAND:say <user> が <slot_machine> のジャックポットを取りました（<money> <currency>、infernalカプセルトイ券 3 枚）'
