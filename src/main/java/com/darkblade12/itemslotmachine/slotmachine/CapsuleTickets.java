@@ -10,13 +10,17 @@ import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 
-// 当たったときに、CapsuleToy のコード付き券を 1 枚ずつ作る
+// 当たったときに、指定したカプセルトイ専用のコード付き券を 1 枚ずつ作る
 public final class CapsuleTickets {
     private CapsuleTickets() {
     }
 
-    public static List<ItemStack> issue(Plugin plugin, int count) {
+    public static List<ItemStack> issue(Plugin plugin, int count, String capsuleName) {
         if (count < 1) {
+            return Collections.emptyList();
+        }
+        if (capsuleName == null || capsuleName.isEmpty()) {
+            plugin.getLogger().warning("Capsule ticket name is missing. Capsule tickets were not given.");
             return Collections.emptyList();
         }
         Plugin capsule = Bukkit.getPluginManager().getPlugin("CapsuleToy");
@@ -27,16 +31,16 @@ public final class CapsuleTickets {
 
         Method method;
         try {
-            method = capsule.getClass().getMethod("createCodedTicket");
+            method = capsule.getClass().getMethod("createCodedTicket", String.class);
         } catch (NoSuchMethodException e) {
-            plugin.getLogger().log(Level.WARNING, "CapsuleToy cannot create a coded ticket.", e);
+            plugin.getLogger().log(Level.WARNING, "CapsuleToy cannot create a ticket for one capsule toy.", e);
             return Collections.emptyList();
         }
 
         List<ItemStack> tickets = new ArrayList<>(count);
         for (int i = 0; i < count; i++) {
             try {
-                Object created = method.invoke(capsule);
+                Object created = method.invoke(capsule, capsuleName);
                 if (!(created instanceof ItemStack)) {
                     plugin.getLogger().warning("CapsuleToy did not create a ticket.");
                     break;

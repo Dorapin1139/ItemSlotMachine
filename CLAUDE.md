@@ -65,7 +65,7 @@
 - スロットマシン設定に `triple-pays-pot`、`anticipate`、`symbol-types` の重み、`money-pot.group` が無い既存ファイルは、これまでと同じ動き（三つ揃いはポット全取り、絵柄は等確率、焦らしなし、ポットは機械ごと）
 - `template.yml` はファイルが無いときだけ jar から書き出す。既にある雛形は更新しない。新しい配当で機械を建てるには、サーバーを止めて `plugins/ItemSlotMachine/template.yml` を差し替える
 - 設定が読めない機械は読み込まず、その間は保護しない。`/slot reload` は読めなかった機械名と理由を実行者に出す。引数なしの `reload()` は、config の再読み込みに成功したら true を返す。読めなかったファイルは `/slot reload <名前>` で読み直せる
-- コンボの `capsule-tickets` は 1 から 64。当たったときに CapsuleToy の `createCodedTicket()` を反射で呼び、コード付き券を 1 枚ずつ作る。コンパイル依存にはしない。CapsuleToy が無い、または券を作れないときは券を渡さずログだけ残し、お金の払いは続ける。`actions` の文字列としては書けない
+- コンボの `capsule-tickets` は 1 から 64。当たったときに CapsuleToy の `createCodedTicket(String)` を反射で呼び、`capsule-ticket-name`（省略時は `infernal`）専用のコード付き券を 1 枚ずつ作る。コンパイル依存にはしない。CapsuleToy が無い、または券を作れないときは券を渡さずログだけ残し、お金の払いは続ける。`actions` の文字列としては書けない。名前の無い `createCodedTicket()` は呼ばない
 - アイテム(ポットの中身など)は `util/ItemStackAdapter` で JSON にする。ポーションの種類・追加効果・旗の模様は名前空間付きのキー(`minecraft:swiftness` など)で書き、フォーク元の古い形式(`basePotionData`、列挙名)も読めるようにしてある
 - アイテムの名前・説明文・本のページは Component 版 API で扱い、文字列との変換は必ず `MessageUtils.toItemComponent`/`fromItemComponent` を使う(斜体を外す。旧 String 版 API と見た目をそろえるため)。看板は `toSignComponent`/`fromSignComponent`(Paper の看板の String 版 API と同じ変換)。作り方が変わるとアイテムが `isSimilar` で一致しなくなる(2.0.2 で名前の内部構造が変わり、2.0.1 以前のコインは `CoinManager.isCoin` で名前・説明文の文字列を比べて判定している。杖はもらい直しが必要)
 

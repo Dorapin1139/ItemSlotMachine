@@ -480,7 +480,7 @@ public final class SlotMachine implements Nameable {
                         break;
                     case GIVE_CAPSULE_TICKETS:
                         int ticketCount = (int) ((AmountAction) action).getAmount();
-                        ItemUtils.stackItems(itemPrize, CapsuleTickets.issue(plugin, ticketCount));
+                        ItemUtils.stackItems(itemPrize, CapsuleTickets.issue(plugin, ticketCount, settings.capsuleTicketName));
                         break;
                     default:
                         /* Unsupported combo action */

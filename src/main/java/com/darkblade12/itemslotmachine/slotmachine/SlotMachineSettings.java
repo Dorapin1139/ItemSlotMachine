@@ -29,6 +29,7 @@ import java.util.regex.Pattern;
 
 public class SlotMachineSettings extends SettingsBase<ItemSlotMachine> {
     private static final Pattern MONEY_POT_GROUP_NAME = Pattern.compile("[A-Za-z0-9_-]{1,32}");
+    private static final Pattern CAPSULE_TICKET_NAME = Pattern.compile("[0-9A-Za-z_]+");
     private static final int MAX_SYMBOL_WEIGHT = 10000;
     private final File file;
     int coinAmount;
@@ -59,6 +60,7 @@ public class SlotMachineSettings extends SettingsBase<ItemSlotMachine> {
     ItemStack[] itemPotDefault;
     ItemStack[] itemPotRaise;
     Combo[] combos;
+    String capsuleTicketName;
 
     public SlotMachineSettings(ItemSlotMachine plugin, File file) {
         super(plugin);
@@ -73,6 +75,10 @@ public class SlotMachineSettings extends SettingsBase<ItemSlotMachine> {
     public void load() throws InvalidValueException {
         config = YamlConfiguration.loadConfiguration(file);
         Map<String, ItemStack> customItems = plugin.getManager(CoinManager.class).getCustomItems();
+        capsuleTicketName = config.getString("capsule-ticket-name", "infernal");
+        if (capsuleTicketName == null || !CAPSULE_TICKET_NAME.matcher(capsuleTicketName).matches()) {
+            throw new InvalidValueException("The value of setting {0} is invalid.", "capsule-ticket-name");
+        }
 
         coinAmount = config.getInt(Setting.COIN_AMOUNT.getPath(), 1);
         if (coinAmount < 1) {

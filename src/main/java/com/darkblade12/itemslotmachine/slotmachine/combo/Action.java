@@ -63,8 +63,6 @@ public class Action {
             case PAY_OUT_MONEY_POT:
             case PAY_OUT_ITEM_POT:
                 return new Action(type);
-            case GIVE_CAPSULE_TICKETS:
-                throw new IllegalArgumentException("Unsupported action type.");
             default:
                 throw new IllegalArgumentException("Unsupported action type.");
         }
