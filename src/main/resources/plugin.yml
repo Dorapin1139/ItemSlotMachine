@@ -4,7 +4,7 @@ authors: [DarkBlade12, kubotan, tash087]
 website: https://github.com/gorogoro-space/ItemSlotMachine
 main: com.darkblade12.itemslotmachine.ItemSlotMachine
 api-version: '1.21.11'
-softdepend: [Vault, Multiverse-Core, Multiworld, PlotMe, MyWorlds, Essentials]
+softdepend: [Vault, Multiverse-Core, Multiworld, PlotMe, MyWorlds, Essentials, CapsuleToy]
 
 commands:
   design:

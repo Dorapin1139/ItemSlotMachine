@@ -15,6 +15,7 @@ import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Hanging;
 import org.bukkit.entity.Player;
@@ -45,12 +46,14 @@ import java.util.stream.Collectors;
 public final class SlotMachineManager extends Manager<ItemSlotMachine> {
     private final List<SlotMachine> slots;
     private final Map<String, MoneyPotGroup> moneyGroups;
+    private final List<LoadFailure> loadFailures;
     private NameableComparator<SlotMachine> comparator;
 
     public SlotMachineManager(ItemSlotMachine plugin) {
         super(plugin, new File(plugin.getDataFolder(), "slot machines"));
         slots = new ArrayList<>();
         moneyGroups = new HashMap<>();
+        loadFailures = new ArrayList<>();
     }
 
     @Override
@@ -69,11 +72,13 @@ public final class SlotMachineManager extends Manager<ItemSlotMachine> {
     public void loadSlotMachines() {
         slots.clear();
         moneyGroups.clear();
+        loadFailures.clear();
 
         for (File file : FileUtils.getFiles(dataDirectory, SlotMachine.FILE_EXTENSION)) {
             try {
                 slots.add(SlotMachine.fromFile(plugin, file));
             } catch (JsonParseException | InvalidValueException | IOException | DesignIncompleteException e) {
+                loadFailures.add(new LoadFailure(machineLabel(file), failureReason(e)));
                 plugin.logException(e, "Failed to load slot machine file %s!", file.getName());
             }
         }
@@ -199,6 +204,64 @@ public final class SlotMachineManager extends Manager<ItemSlotMachine> {
 
     public boolean hasSlotMachine(String name) {
         return slots.stream().anyMatch(s -> s.getName().equalsIgnoreCase(name));
+    }
+
+    public File findMachineFile(String name) {
+        String target = name + SlotMachine.FILE_EXTENSION;
+        for (String fileName : getFileNames()) {
+            if (fileName.equalsIgnoreCase(target)) {
+                return new File(dataDirectory, fileName);
+            }
+        }
+        return null;
+    }
+
+    public List<String> getLoadFailureNames() {
+        return loadFailures.stream().map(failure -> failure.name).collect(Collectors.toList());
+    }
+
+    public void forgetLoadFailure(String name) {
+        loadFailures.removeIf(failure -> failure.name.equalsIgnoreCase(name));
+    }
+
+    public void sendLoadFailures(CommandSender sender) {
+        if (loadFailures.isEmpty()) {
+            return;
+        }
+        plugin.sendMessage(sender, Message.COMMAND_SLOT_RELOAD_MACHINES_FAILED, loadFailures.size());
+        for (LoadFailure failure : loadFailures) {
+            plugin.sendMessage(sender, Message.COMMAND_SLOT_RELOAD_MACHINE_FAILED, failure.name, failure.reason);
+        }
+    }
+
+    public static String failureReason(Throwable throwable) {
+        Throwable cause = throwable.getCause();
+        if (cause != null && cause.getMessage() != null && !cause.getMessage().isEmpty()) {
+            return cause.getMessage();
+        }
+        if (throwable.getMessage() != null && !throwable.getMessage().isEmpty()) {
+            return throwable.getMessage();
+        }
+        return throwable.getClass().getSimpleName();
+    }
+
+    private static String machineLabel(File file) {
+        String name = file.getName();
+        String extension = SlotMachine.FILE_EXTENSION;
+        if (name.toLowerCase().endsWith(extension)) {
+            return name.substring(0, name.length() - extension.length());
+        }
+        return name;
+    }
+
+    private static final class LoadFailure {
+        private final String name;
+        private final String reason;
+
+        private LoadFailure(String name, String reason) {
+            this.name = name;
+            this.reason = reason;
+        }
     }
 
     private int getSpinningCount(Player player) {

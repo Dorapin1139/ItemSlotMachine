@@ -25,7 +25,7 @@
 ## フォークとしての注意
 
 - 既存コードのコメント・ログ・識別子は英語。既存の英語コメントは書き換えない。追加するコメントは日本語でよい。
-- プレイヤー向けメッセージは `src/main/resources/messages_<タグ>.json` にある(同梱は `en-US`・`de-DE`・`ja-JP`。同梱する言語は `ItemSlotMachine.java` の `MessageManager` に `Locale` を渡して登録する)。文言を追加・変更するときは、使っている言語ファイルだけでなく同梱の全ファイルにキーを足す(キーが欠けると表示できない)。
+- プレイヤー向けメッセージは `src/main/resources/messages_<タグ>.json` にある(同梱は `en-US`・`de-DE`・`ja-JP`。同梱する言語は `ItemSlotMachine.java` の `MessageManager` に `Locale` を渡して登録する)。文言を追加・変更するときは、同梱の全言語ファイルにキーを足す。サーバーに既にある言語ファイルは上書きしない。足りないキーは jar 内の同じ言語、無ければ `en-US` から補う。
 - パッケージ名 `com.darkblade12.itemslotmachine` などフォーク元の表記は、頼まれない限り変えない。`plugin.yml` は `authors: [DarkBlade12, kubotan, tash087]`、`website` はこのリポジトリの URL にしてある。
 - ライセンスは GPL-3.0 なので、フォーク元の著作権表示を消さない。
 
@@ -38,7 +38,7 @@
 - バージョンは `gradle.properties` の `version`。`plugin.yml` の `${version}` に `processResources` で埋め込む。`api-version: '1.21.11'`
 - commons-lang などの外部ユーティリティは使わず、Java 標準で書く(Paper 1.21.11 に commons-lang 2 はない)。`capitalize` と `unescapeJava`、`ChatColor` の代わりの `translateAlternateColorCodes`・`stripColor` は `util/MessageUtils` にある
 - 削除予定(`forRemoval`)の API は使わない。レジストリの要素は `RegistryAccess.registryAccess().getRegistry(RegistryKey.…)` で引く(`Registry.BANNER_PATTERN` や `PatternType.getKey()` なども非推奨)。非推奨(削除予定ではない)の API も使わない(2.0.2 で `-Xlint:all` の警告を 0 件にした)
-- softdepend: Vault, Multiverse-Core, Multiworld, PlotMe, MyWorlds, Essentials
+- softdepend: Vault, Multiverse-Core, Multiworld, PlotMe, MyWorlds, Essentials, CapsuleToy
 - パッケージ名は**すべて小文字**のままにする。大文字が混ざると plugin.yml の main と一致せず起動しない
 - 動作確認はサーバーを再起動して行う。PlugManX での読み込みは権限やコマンドの登録が不完全になることがある
 
@@ -63,6 +63,9 @@
 - スロットマシン・デザイン・統計・コインショップの保存形式を変えるときは、既存データの読み込み(移行)を必ず考える。サーバー上に既存のデータがある前提
 - 共有ジャックポットは `money-pots/<グループ名>.json`（`{"money": 数値}`）。グループ名は `[A-Za-z0-9_-]{1,32}`。ファイルが無いときは、同じグループで一番高い機械の金額で作る。ファイルがあるときはそれを正本にし、各機械の json に残っている金額は使わない。壊れたファイルは上書きしない（そのグループは機械ごとのポットのまま）
 - スロットマシン設定に `triple-pays-pot`、`anticipate`、`symbol-types` の重み、`money-pot.group` が無い既存ファイルは、これまでと同じ動き（三つ揃いはポット全取り、絵柄は等確率、焦らしなし、ポットは機械ごと）
+- `template.yml` はファイルが無いときだけ jar から書き出す。既にある雛形は更新しない。新しい配当で機械を建てるには、サーバーを止めて `plugins/ItemSlotMachine/template.yml` を差し替える
+- 設定が読めない機械は読み込まず、その間は保護しない。`/slot reload` は読めなかった機械名と理由を実行者に出す。引数なしの `reload()` は、config の再読み込みに成功したら true を返す。読めなかったファイルは `/slot reload <名前>` で読み直せる
+- コンボの `capsule-tickets` は 1 から 64。当たったときに CapsuleToy の `createCodedTicket()` を反射で呼び、コード付き券を 1 枚ずつ作る。コンパイル依存にはしない。CapsuleToy が無い、または券を作れないときは券を渡さずログだけ残し、お金の払いは続ける。`actions` の文字列としては書けない
 - アイテム(ポットの中身など)は `util/ItemStackAdapter` で JSON にする。ポーションの種類・追加効果・旗の模様は名前空間付きのキー(`minecraft:swiftness` など)で書き、フォーク元の古い形式(`basePotionData`、列挙名)も読めるようにしてある
 - アイテムの名前・説明文・本のページは Component 版 API で扱い、文字列との変換は必ず `MessageUtils.toItemComponent`/`fromItemComponent` を使う(斜体を外す。旧 String 版 API と見た目をそろえるため)。看板は `toSignComponent`/`fromSignComponent`(Paper の看板の String 版 API と同じ変換)。作り方が変わるとアイテムが `isSimilar` で一致しなくなる(2.0.2 で名前の内部構造が変わり、2.0.1 以前のコインは `CoinManager.isCoin` で名前・説明文の文字列を比べて判定している。杖はもらい直しが必要)
 

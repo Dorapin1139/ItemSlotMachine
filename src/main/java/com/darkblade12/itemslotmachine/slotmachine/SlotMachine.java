@@ -478,6 +478,10 @@ public final class SlotMachine implements Nameable {
                         writeMoneyPot(currentMoneyPot() + ((AmountAction) action).getAmount(), false);
                         moneyPotTouched = true;
                         break;
+                    case GIVE_CAPSULE_TICKETS:
+                        int ticketCount = (int) ((AmountAction) action).getAmount();
+                        ItemUtils.stackItems(itemPrize, CapsuleTickets.issue(plugin, ticketCount));
+                        break;
                     default:
                         /* Unsupported combo action */
                         break;

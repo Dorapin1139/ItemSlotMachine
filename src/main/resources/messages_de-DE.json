@@ -181,5 +181,7 @@
     "command.slot.reload.single-failed": "&cDer Spielautomat &6{0} &ckonnte nicht neu geladen werden: &4{1}",
     "command.slot.reload.succeeded": "&aDas Plugin der Version &6{0} &awurde neu geladen. (&7{1} ms&a)",
     "command.slot.reload.single-succeeded": "&aDer Spielautomat &6{0} &awurde neu geladen.",
+    "command.slot.reload.machines-failed": "&c{0} Spielautomaten konnten nicht geladen werden. Diese Automaten sind nicht geschützt.",
+    "command.slot.reload.machine-failed": "&c- &6{0}&c: &4{1}",
     "command.slot.reload.description": "Lädt das Plugin oder einen einzelnen Spielautomaten neu"
 }

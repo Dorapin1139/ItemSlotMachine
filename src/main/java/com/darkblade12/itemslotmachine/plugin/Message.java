@@ -187,6 +187,8 @@ public enum Message {
     COMMAND_SLOT_RELOAD_SINGLE_FAILED("command.slot.reload.single-failed"),
     COMMAND_SLOT_RELOAD_SUCCEEDED("command.slot.reload.succeeded"),
     COMMAND_SLOT_RELOAD_SINGLE_SUCCEEDED("command.slot.reload.single-succeeded"),
+    COMMAND_SLOT_RELOAD_MACHINES_FAILED("command.slot.reload.machines-failed"),
+    COMMAND_SLOT_RELOAD_MACHINE_FAILED("command.slot.reload.machine-failed"),
     COMMAND_SLOT_RELOAD_DESCRIPTION("command.slot.reload.description");
 
     private static final Map<String, Message> NAME_MAP = new HashMap<>();

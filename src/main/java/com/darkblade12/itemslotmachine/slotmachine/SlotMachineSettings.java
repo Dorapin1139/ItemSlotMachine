@@ -202,6 +202,14 @@ public class SlotMachineSettings extends SettingsBase<ItemSlotMachine> {
                     }
                     parsedActions.add(new ItemAction(ActionType.PAY_OUT_ITEMS, prizeItems));
                 }
+                String ticketPath = basePath + "capsule-tickets";
+                if (config.contains(ticketPath)) {
+                    int tickets = config.getInt(ticketPath);
+                    if (tickets < 1 || tickets > 64) {
+                        throw new InvalidValueException("The value of setting {0} must be between 1 and 64.", ticketPath);
+                    }
+                    parsedActions.add(new AmountAction(ActionType.GIVE_CAPSULE_TICKETS, tickets));
+                }
                 String actionPath = basePath + "actions";
                 List<String> actionList = config.getStringList(actionPath);
                 for (String action : actionList) {

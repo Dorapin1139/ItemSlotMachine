@@ -98,7 +98,7 @@ money-pot:
 item-pot:
 
   # Determines whether the item pot is enabled
-  # Off in this template. Item prizes are infernal capsule toy tickets on the combos
+  # Off in this template. Item prizes are coded CapsuleToy tickets created when a combo pays
   enabled: false
 
   # The default content of the item pot, which will be set after a player has won the pot
@@ -117,7 +117,8 @@ item-pot:
 combos:
 
   # house-cut is 0, so money is the amount the player receives
-  # Ticket name and lore must match CapsuleToy stack-ticket-display-name and stack-ticket-lore1 to lore3
+  # capsule-tickets asks CapsuleToy for that many coded tickets when the combo pays
+  # Each ticket is separate and has its own code. 1 to 64
   berries:
     pattern: ['sweet_berries', 'sweet_berries', 'sweet_berries']
     money: 200
@@ -129,14 +130,12 @@ combos:
   carrot:
     pattern: ['carrot', 'carrot', 'carrot']
     money: 2000
-    items:
-      - '{"type":"PAPER","amount":1,"meta":{"displayName":"§d§linfernalカプセルトイ券","lore":["§7infernalカプセルトイで使えます。","§7ランダムなinfernalmobsのアイテムと交換できます。","§7一部出ないアイテムもあります。"]}}'
+    capsule-tickets: 1
 
   apple:
     pattern: ['apple', 'apple', 'apple']
     money: 5000
-    items:
-      - '{"type":"PAPER","amount":2,"meta":{"displayName":"§d§linfernalカプセルトイ券","lore":["§7infernalカプセルトイで使えます。","§7ランダムなinfernalmobsのアイテムと交換できます。","§7一部出ないアイテムもあります。"]}}'
+    capsule-tickets: 2
 
   # The list of actions that will be executed by this combo
   # Money pot actions: MULTIPLY_MONEY_POT:<amount>, RAISE_MONEY_POT:<amount>, PAY_OUT_MONEY_POT, PAY_OUT_MONEY_POT_FRACTION:<fraction>
@@ -150,7 +149,6 @@ combos:
   # Please note that the money or item pot actions will only work if that pot is enabled
   jackpot:
     pattern: ['golden_apple', 'golden_apple', 'golden_apple']
-    items:
-      - '{"type":"PAPER","amount":3,"meta":{"displayName":"§d§linfernalカプセルトイ券","lore":["§7infernalカプセルトイで使えます。","§7ランダムなinfernalmobsのアイテムと交換できます。","§7一部出ないアイテムもあります。"]}}'
+    capsule-tickets: 3
     actions:
       - 'PAY_OUT_MONEY_POT'

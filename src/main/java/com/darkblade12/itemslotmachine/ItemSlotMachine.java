@@ -77,7 +77,7 @@ public final class ItemSlotMachine extends PluginBase {
             return false;
         }
 
-        return false;
+        return true;
     }
 
     private boolean loadTemplate() {

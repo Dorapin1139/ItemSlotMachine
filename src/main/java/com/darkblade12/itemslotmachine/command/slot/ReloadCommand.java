@@ -9,6 +9,8 @@ import com.darkblade12.itemslotmachine.slotmachine.SlotMachineException;
 import com.darkblade12.itemslotmachine.slotmachine.SlotMachineManager;
 import org.bukkit.command.CommandSender;
 
+import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 
 public final class ReloadCommand extends CommandBase<ItemSlotMachine> {
@@ -28,13 +30,15 @@ public final class ReloadCommand extends CommandBase<ItemSlotMachine> {
             long duration = System.currentTimeMillis() - startTime;
             String version = plugin.getVersion();
             plugin.sendMessage(sender, Message.COMMAND_SLOT_RELOAD_SUCCEEDED, version, duration);
+            plugin.getManager(SlotMachineManager.class).sendLoadFailures(sender);
             return;
         }
 
         String name = args[0];
-        SlotMachine slot = plugin.getManager(SlotMachineManager.class).getSlotMachine(name);
+        SlotMachineManager manager = plugin.getManager(SlotMachineManager.class);
+        SlotMachine slot = manager.getSlotMachine(name);
         if (slot == null) {
-            plugin.sendMessage(sender, Message.SLOT_MACHINE_NOT_FOUND, name);
+            loadUnloadedMachine(plugin, sender, manager, name);
             return;
         }
         name = slot.getName();
@@ -43,15 +47,40 @@ public final class ReloadCommand extends CommandBase<ItemSlotMachine> {
             slot.reload();
         } catch (SlotMachineException e) {
             plugin.logException(e, "Failed to reload slot machine %s!", name);
-            plugin.sendMessage(sender, Message.COMMAND_SLOT_RELOAD_SINGLE_FAILED, name, e.getMessage());
+            plugin.sendMessage(sender, Message.COMMAND_SLOT_RELOAD_SINGLE_FAILED, name, SlotMachineManager.failureReason(e));
             return;
         }
 
         plugin.sendMessage(sender, Message.COMMAND_SLOT_RELOAD_SINGLE_SUCCEEDED, name);
     }
 
+    private void loadUnloadedMachine(ItemSlotMachine plugin, CommandSender sender, SlotMachineManager manager, String name) {
+        File file = manager.findMachineFile(name);
+        if (file == null) {
+            plugin.sendMessage(sender, Message.SLOT_MACHINE_NOT_FOUND, name);
+            return;
+        }
+
+        try {
+            SlotMachine loaded = SlotMachine.fromFile(plugin, file);
+            manager.register(loaded);
+            manager.forgetLoadFailure(name);
+            manager.forgetLoadFailure(loaded.getName());
+            plugin.sendMessage(sender, Message.COMMAND_SLOT_RELOAD_SINGLE_SUCCEEDED, loaded.getName());
+        } catch (Exception e) {
+            plugin.logException(e, "Failed to reload slot machine %s!", name);
+            plugin.sendMessage(sender, Message.COMMAND_SLOT_RELOAD_SINGLE_FAILED, name, SlotMachineManager.failureReason(e));
+        }
+    }
+
     @Override
     public List<String> getSuggestions(ItemSlotMachine plugin, CommandSender sender, String[] args) {
-        return args.length == 1 ? plugin.getManager(SlotMachineManager.class).getNames() : null;
+        if (args.length != 1) {
+            return null;
+        }
+        SlotMachineManager manager = plugin.getManager(SlotMachineManager.class);
+        List<String> names = new ArrayList<>(manager.getNames());
+        names.addAll(manager.getLoadFailureNames());
+        return names;
     }
 }

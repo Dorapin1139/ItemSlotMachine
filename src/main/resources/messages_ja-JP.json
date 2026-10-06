@@ -181,5 +181,7 @@
     "command.slot.reload.single-failed": "&cスロットマシン &6{0} &cを再読み込みできませんでした: &4{1}",
     "command.slot.reload.succeeded": "&aプラグイン バージョン &6{0} &aを再読み込みしました。(&7{1} ms&a)",
     "command.slot.reload.single-succeeded": "&aスロットマシン &6{0} &aを再読み込みしました。",
+    "command.slot.reload.machines-failed": "&c読み込めなかったスロットマシンが &6{0} &c台あります。その機械は保護されません。",
+    "command.slot.reload.machine-failed": "&c- &6{0}&c: &4{1}",
     "command.slot.reload.description": "プラグイン全体、または 1 台のスロットマシンを再読み込みします"
 }

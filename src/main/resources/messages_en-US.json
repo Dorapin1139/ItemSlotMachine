@@ -181,5 +181,7 @@
     "command.slot.reload.single-failed": "&cFailed to reload slot machine &6{0}&c: &4{1}",
     "command.slot.reload.succeeded": "&aPlugin version &6{0} &ahas been reloaded. (&7{1} ms&a)",
     "command.slot.reload.single-succeeded": "&aThe slot machine &6{0} &ahas been reloaded.",
+    "command.slot.reload.machines-failed": "&cFailed to load &6{0} &cslot machine(s). Those machines are not protected.",
+    "command.slot.reload.machine-failed": "&c- &6{0}&c: &4{1}",
     "command.slot.reload.description": "Reloads the plugin or a single slot machine"
 }

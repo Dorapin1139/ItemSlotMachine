@@ -55,7 +55,7 @@ public final class MessageManager extends Manager<PluginBase> {
             }
         }
 
-        loadMessages(messageData);
+        loadMessages(messageData, tag);
         plugin.logInfo("Messages for locale %s loaded.", tag);
     }
 
@@ -100,7 +100,7 @@ public final class MessageManager extends Manager<PluginBase> {
         }
     }
 
-    private void loadMessages(JsonObject messageData) {
+    private void loadMessages(JsonObject messageData, String tag) {
         for (Entry<String, JsonElement> entry : messageData.entrySet()) {
             String key = entry.getKey();
             Message message = Message.fromKey(key);
@@ -109,16 +109,63 @@ public final class MessageManager extends Manager<PluginBase> {
                 continue;
             }
 
-            String text = MessageUtils.unescapeJava(entry.getValue().getAsString());
-            MessageFormat format = new MessageFormat(MessageUtils.translateAlternateColorCodes('&', text));
-            messageCache.put(message, format);
-            if (missing == null && message == Message.MESSAGE_MISSING) {
-                missing = format;
-            }
+            cacheMessage(message, entry.getValue().getAsString());
         }
+
+        // 既にある言語ファイルは上書きしない。足りないキーだけ jar から補う
+        fillMissingMessages(tag);
 
         if (missing == null) {
             missing = new MessageFormat("Message missing");
+        }
+    }
+
+    private void fillMissingMessages(String tag) {
+        JsonObject primary = readBundledMessages(tag);
+        JsonObject english = "en-US".equals(tag) ? primary : readBundledMessages("en-US");
+        int filled = 0;
+        for (Message message : Message.values()) {
+            if (messageCache.containsKey(message)) {
+                continue;
+            }
+            String text = bundledText(primary, message.getKey());
+            if (text == null) {
+                text = bundledText(english, message.getKey());
+            }
+            if (text == null) {
+                continue;
+            }
+            cacheMessage(message, text);
+            filled++;
+        }
+        if (filled > 0) {
+            plugin.logInfo("Filled %d missing message(s) from the bundled file.", filled);
+        }
+    }
+
+    private JsonObject readBundledMessages(String tag) {
+        String fileName = MessageFormat.format(FILE_PATTERN, tag);
+        try {
+            return FileUtils.readJson(plugin, fileName, JsonElement.class).getAsJsonObject();
+        } catch (IOException | JsonParseException | IllegalStateException e) {
+            plugin.logException(e, "Failed to read bundled message file %s!", fileName);
+            return null;
+        }
+    }
+
+    private static String bundledText(JsonObject data, String key) {
+        if (data == null || !data.has(key) || !data.get(key).isJsonPrimitive()) {
+            return null;
+        }
+        return data.get(key).getAsString();
+    }
+
+    private void cacheMessage(Message message, String text) {
+        String converted = MessageUtils.translateAlternateColorCodes('&', MessageUtils.unescapeJava(text));
+        MessageFormat format = new MessageFormat(converted);
+        messageCache.put(message, format);
+        if (message == Message.MESSAGE_MISSING) {
+            missing = format;
         }
     }
 }
